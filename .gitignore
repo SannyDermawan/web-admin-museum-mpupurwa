@@ -1,0 +1,29 @@
+# dependencies
+node_modules/
+
+# build output
+.next/
+dist/
+build/
+next-env.d.ts
+
+# environment files (the .env.example files ARE tracked)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# TypeScript
+*.tsbuildinfo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# editors
+.vscode/
+.idea/
+
+# logs
+*.log

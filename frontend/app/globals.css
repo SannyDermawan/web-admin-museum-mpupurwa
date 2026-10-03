@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+/* Design tokens, taken 1:1 from the approved HTML designs (:root variables). */
+@theme {
+  --color-charcoal: #1f1f1f;
+  --color-charcoal-soft: #2b2b29;
+  --color-gold: #d4af37;
+  --color-gold-soft: #f4ecd3;
+  --color-offwhite: #f7f5f0;
+  --color-stone-line: #e6e2d8;
+  --color-ink: #241a0f;
+  --color-ink-soft: #7a7368;
+  --color-success: #2f7d4f;
+  --color-success-bg: #e7f3ec;
+  --color-success-line: #c9e4d3;
+  --color-danger: #b3261e;
+  --color-danger-bg: #fbeae9;
+  --color-danger-line: #f1cfcd;
+  --color-pending-bg: #fbf3dc;
+  --color-pending-line: #e9d9a8;
+  --color-pending-ink: #8a6a1e;
+  --color-row-hover: #fcfbf8;
+
+  /* The designs never set a line-height (browser default "normal"), so the
+     Tailwind text-* sizes must not add one either. */
+  --text-xs--line-height: normal;
+  --text-sm--line-height: normal;
+  --text-base--line-height: normal;
+  --text-lg--line-height: normal;
+  --text-xl--line-height: normal;
+}
+
+@theme inline {
+  --font-sans: var(--font-karla), sans-serif;
+  --font-display: var(--font-fraunces), serif;
+}
+
+@layer base {
+  html {
+    line-height: normal;
+  }
+
+  body {
+    background: var(--color-offwhite);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    color: var(--color-ink);
+  }
+
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+}
