@@ -125,17 +125,6 @@ export default function BookingRombonganPage() {
 
   return (
     <main className="booking-page">
-      <div className="page-heading">
-        <div>
-          <h1>Booking Rombongan</h1>
-          <p>Kelola pengajuan kunjungan kelompok dan sekolah</p>
-        </div>
-        <div className="heading-note">
-          <span className="heading-dot" />
-          {counts.pending} pengajuan menunggu
-        </div>
-      </div>
-
       <section className="panel">
         <div className="toolbar">
           <div className="tabs" role="tablist" aria-label="Filter status booking">
@@ -227,18 +216,30 @@ export default function BookingRombonganPage() {
                           </button>
                         </>
                       ) : null}
-                      <button
-                        type="button"
-                        className="detail-btn"
-                        aria-label={`Lihat detail ${booking.institution}`}
-                        title="Lihat detail"
-                        onClick={() => setSelectedBooking(booking)}
-                      >
-                        <svg viewBox="0 0 24 24" aria-hidden="true">
-                          <circle cx="12" cy="12" r="9" />
-                          <path d="M12 11v5M12 8h.01" />
-                        </svg>
-                      </button>
+                      {booking.status === "pending" ? (
+                        // Still waiting: Setujui / Tolak come first, so the detail button stays a compact icon.
+                        <button
+                          type="button"
+                          className="detail-btn"
+                          aria-label={`Lihat detail ${booking.institution}`}
+                          title="Lihat detail"
+                          onClick={() => setSelectedBooking(booking)}
+                        >
+                          <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <circle cx="12" cy="12" r="9" />
+                            <path d="M12 11v5M12 8h.01" />
+                          </svg>
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="action-btn neutral"
+                          aria-label={`Lihat detail ${booking.institution}`}
+                          onClick={() => setSelectedBooking(booking)}
+                        >
+                          Lihat Detail
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -357,39 +358,7 @@ export default function BookingRombonganPage() {
           color: #241a0f;
           font-family: var(--font-karla, Arial, sans-serif);
         }
-        .page-heading {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 16px;
-          margin-bottom: 22px;
-        }
-        .page-heading h1 {
-          margin: 0;
-          color: #241a0f;
-          font-family: var(--font-fraunces, Georgia, serif);
-          font-size: 24px;
-          font-weight: 600;
-        }
-        .page-heading p {
-          margin: 5px 0 0;
-          color: #7a7368;
-          font-size: 13px;
-        }
-        .heading-note {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          padding: 9px 12px;
-          border: 1px solid #e9d9a8;
-          border-radius: 9px;
-          background: #fbf3dc;
-          color: #8a6a1e;
-          font-size: 12px;
-          font-weight: 700;
-          white-space: nowrap;
-        }
-        .heading-dot, .status-dot {
+        .status-dot {
           width: 7px;
           height: 7px;
           flex: 0 0 auto;
@@ -670,8 +639,6 @@ export default function BookingRombonganPage() {
           .search-box { width: 100%; }
         }
         @media (max-width: 600px) {
-          .page-heading { align-items: flex-start; flex-direction: column; }
-          .page-heading h1 { font-size: 21px; }
           .tabs { gap: 3px; }
           .tab { padding: 7px 8px; font-size: 11px; }
           th, td { padding: 12px 13px; }

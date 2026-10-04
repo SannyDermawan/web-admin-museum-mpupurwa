@@ -91,44 +91,6 @@ export default function CollectionsPage() {
   return (
     <div className="flex min-h-screen bg-[#F7F5F0] text-[#241A0F] font-sans">
       <div className="flex-1 min-w-0 flex flex-col">
-        {/* Topbar Header */}
-        <header className="h-[72px] flex-shrink-0 bg-white border-b border-[#E6E2D8] flex items-center justify-between px-8 sticky top-0 z-10">
-          <div>
-            <h1 className="text-[21px] font-semibold text-[#241A0F]">
-              Manajemen Koleksi
-            </h1>
-            <div className="text-[12.5px] text-[#7A7368] mt-0.5">
-              Kelola data koleksi arca dan prasasti museum
-            </div>
-          </div>
-          <div className="flex items-center gap-3.5">
-            <div className="flex items-center gap-2 bg-[#F7F5F0] border border-[#E6E2D8] rounded-[9px] px-3.5 py-2 w-60">
-              <svg
-                className="w-[15px] h-[15px] stroke-[#7A7368] fill-none stroke-[1.7] flex-shrink-0"
-                viewBox="0 0 24 24"
-              >
-                <circle cx="11" cy="11" r="7" />
-                <path d="M21 21l-4.3-4.3" />
-              </svg>
-              <input
-                type="text"
-                placeholder="Cari data..."
-                className="bg-transparent border-none outline-none text-[13px] w-full text-[#241A0F]"
-              />
-            </div>
-            <div className="w-[38px] h-[38px] rounded-[9px] flex items-center justify-center border border-[#E6E2D8] relative cursor-pointer">
-              <svg
-                className="w-[17px] h-[17px] stroke-[#241A0F] fill-none stroke-[1.6]"
-                viewBox="0 0 24 24"
-              >
-                <path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
-                <path d="M13.7 21a2 2 0 01-3.4 0" />
-              </svg>
-              <span className="absolute top-2 right-2 w-[7px] h-[7px] rounded-full bg-[#B3261E] border-[1.5px] border-white"></span>
-            </div>
-          </div>
-        </header>
-
         {/* Body Content */}
         <div className="p-7 px-8 pb-12 flex-1">
           <section className="bg-white border border-[#E6E2D8] rounded-xl overflow-hidden">
