@@ -109,3 +109,6 @@ export type DashboardData = {
   recentVisitors: Visitor[];
   pendingBookings: PendingBookingSummary[];
 };
+
+// Account management (Manajemen Akun) types live in their own file.
+export * from "./accounts";

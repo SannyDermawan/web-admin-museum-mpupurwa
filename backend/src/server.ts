@@ -3,6 +3,7 @@ import express from "express";
 import { config } from "./config";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
 import { requireAuth } from "./middleware/requireAuth";
+import { accountsRoutes } from "./routes/accounts.routes";
 import { authRoutes } from "./routes/auth.routes";
 import { dashboardRoutes } from "./routes/dashboard.routes";
 import { visitorsRoutes } from "./routes/visitors.routes";
@@ -20,6 +21,7 @@ app.use("/api/auth", authRoutes);
 // Protected: need a valid login cookie. Add new modules here.
 app.use("/api/dashboard", requireAuth, dashboardRoutes);
 app.use("/api/visitors", requireAuth, visitorsRoutes);
+app.use("/api/accounts", requireAuth, accountsRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

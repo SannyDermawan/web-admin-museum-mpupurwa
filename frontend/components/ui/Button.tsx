@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
-export type ButtonVariant = "gold" | "outline" | "success" | "danger" | "ghost";
+export type ButtonVariant = "gold" | "outline" | "success" | "danger" | "solidDanger" | "ghost";
 
 const base = "font-bold whitespace-nowrap transition-colors disabled:opacity-60";
 const sizes = {
@@ -15,6 +15,8 @@ const variants: Record<ButtonVariant, string> = {
   outline: "border border-stone-line bg-white text-ink hover:bg-offwhite",
   success: "border border-success-line bg-success-bg text-success hover:brightness-95",
   danger: "border border-danger-line bg-danger-bg text-danger hover:brightness-95",
+  /** Filled red: the final "Ya, hapus" button of a delete confirmation */
+  solidDanger: "bg-danger text-white hover:brightness-95",
   ghost: "text-ink-soft hover:text-ink",
 };
 

@@ -56,3 +56,16 @@ export function apiPost<T>(path: string, payload?: unknown, init?: RequestInit) 
     body: payload === undefined ? undefined : JSON.stringify(payload),
   });
 }
+
+export function apiPatch<T>(path: string, payload?: unknown, init?: RequestInit) {
+  return request<T>(path, {
+    ...init,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...init?.headers },
+    body: payload === undefined ? undefined : JSON.stringify(payload),
+  });
+}
+
+export function apiDelete<T = null>(path: string, init?: RequestInit) {
+  return request<T>(path, { ...init, method: "DELETE" });
+}

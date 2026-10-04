@@ -99,3 +99,16 @@ export const MenuIcon = (props: IconProps) => (
     <path d="M4 7h16M4 12h16M4 17h16" />
   </Icon>
 );
+
+export const EditIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M12 20h9" />
+    <path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z" />
+  </Icon>
+);
+
+export const TrashIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0l-1 14a2 2 0 01-2 2H7a2 2 0 01-2-2L4 6" />
+  </Icon>
+);

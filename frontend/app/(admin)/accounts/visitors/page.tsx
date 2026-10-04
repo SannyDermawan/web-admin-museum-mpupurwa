@@ -1,9 +1,14 @@
 import type { Metadata } from "next";
-import { ModulePlaceholder } from "@/components/layout/ModulePlaceholder";
+import { Suspense } from "react";
+import { VisitorAccountsView } from "@/components/accounts/VisitorAccountsView";
 
 export const metadata: Metadata = { title: "Manajemen Akun · Pengunjung" };
 
-// TODO(teammate 1 / feature/account-management): replace this placeholder with the real page.
 export default function Page() {
-  return <ModulePlaceholder name="Manajemen Akun · Pengunjung" />;
+  // The view reads ?q= from the URL, which needs a Suspense boundary.
+  return (
+    <Suspense>
+      <VisitorAccountsView />
+    </Suspense>
+  );
 }
