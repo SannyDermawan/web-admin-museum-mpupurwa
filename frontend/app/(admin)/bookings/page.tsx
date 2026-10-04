@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type BookingStatus = "pending" | "confirmed" | "rejected";
 type FilterStatus = "semua" | BookingStatus;
@@ -88,10 +88,25 @@ const statusLabels: Record<BookingStatus, string> = {
 };
 
 export default function BookingRombonganPage() {
-  const [bookings, setBookings] = useState<Booking[]>(initialBookings);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [filter, setFilter] = useState<FilterStatus>("semua");
   const [search, setSearch] = useState("");
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+
+  useEffect(() => {
+    async function fetchBookings() {
+      try {
+        const res = await fetch("http://localhost:5000/api/bookings");
+        const result = await res.json();
+        if (result.success) {
+          setBookings(result.data);
+        }
+      } catch (error) {
+        console.error("Gagal mengambil data booking:", error);
+      }
+    }
+    fetchBookings();
+  }, []);
 
   const filteredBookings = useMemo(() => {
     const keyword = search.trim().toLowerCase();
@@ -108,12 +123,22 @@ export default function BookingRombonganPage() {
     });
   }, [bookings, filter, search]);
 
-  const updateStatus = (id: string, status: BookingStatus) => {
-    setBookings((current) =>
-      current.map((booking) =>
-        booking.id === id ? { ...booking, status } : booking
-      )
-    );
+ const updateStatus = async (id: string, status: BookingStatus) => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/bookings/${id}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      const result = await res.json();
+      if (result.success) {
+        setBookings((current) =>
+          current.map((booking) => (booking.id === id ? { ...booking, status } : booking))
+        );
+      }
+    } catch (error) {
+      console.error("Gagal memperbarui status:", error);
+    }
   };
 
   const counts = {

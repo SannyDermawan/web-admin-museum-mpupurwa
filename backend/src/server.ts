@@ -7,6 +7,7 @@ import { accountsRoutes } from "./routes/accounts.routes";
 import { authRoutes } from "./routes/auth.routes";
 import { dashboardRoutes } from "./routes/dashboard.routes";
 import { visitorsRoutes } from "./routes/visitors.routes";
+import bookingsRoutes from "./routes/bookings.routes";
 
 const app = express();
 
@@ -17,6 +18,7 @@ app.use(express.json());
 
 // Public: login, logout, forgot password.
 app.use("/api/auth", authRoutes);
+app.use("/api/bookings", bookingsRoutes);
 
 // Protected: need a valid login cookie. Add new modules here.
 app.use("/api/dashboard", requireAuth, dashboardRoutes);
