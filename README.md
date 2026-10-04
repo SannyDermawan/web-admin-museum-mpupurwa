@@ -22,8 +22,9 @@ Menu untuk modul yang masih dikembangkan sudah ada di sidebar; halamannya masih 
 
 - Login admin dengan sesi berbasis cookie `httpOnly` dan opsi "Ingat saya di perangkat ini".
 - Halaman lupa kata sandi (simulasi, tidak mengirim email).
-- **Dashboard**: empat kartu ringkasan, grafik jumlah pengunjung 7 hari terakhir, diagram status booking, daftar pengunjung terbaru, dan daftar booking yang menunggu konfirmasi.
-- **Pengunjung hari ini**: tabel check-in harian, pencarian dari kolom cari di navbar, dan tombol **Unduh CSV**.
+- **Dashboard**: empat kartu ringkasan, grafik jumlah pengunjung (pilihan 24 jam, 7 hari, atau 30 hari terakhir), diagram status booking, daftar pengunjung terbaru, dan daftar booking yang menunggu konfirmasi.
+- **Pengunjung hari ini**: tabel check-in harian, kolom cari di halamannya, dan tombol **Unduh CSV**.
+- **Notifikasi** (ikon lonceng di navbar): booking yang menunggu persetujuan dan akun pengunjung baru, diambil dari data yang sudah ada. Klik notifikasi untuk menandainya sudah dibaca dan membuka halaman terkait. Belum ada notifikasi sungguhan di backend.
 - Tampilan responsif: sidebar menjadi menu geser di layar kecil.
 
 ## Teknologi
@@ -145,7 +146,9 @@ Semua respons memakai format yang sama:
 | `POST /api/auth/login` | Tidak | Body `{ email, password, remember? }`. Mengisi cookie sesi dan mengembalikan `{ user }`. |
 | `POST /api/auth/forgot-password` | Tidak | Body `{ email }`. Tidak mengirim email sungguhan. |
 | `POST /api/auth/logout` | Tidak | Menghapus cookie sesi. |
-| `GET /api/dashboard` | Ya | `stats`, `visitorTrend` (7 hari), `bookingStatus`, `recentVisitors`, `pendingBookings`. |
+| `GET /api/dashboard` | Ya | `stats`, `recentVisitors`, `pendingBookings`. |
+| `GET /api/dashboard/visitor-trend?range=` | Ya | Titik grafik pengunjung. `range` = `24h` (per jam), `7d` atau `30d` (per hari); bawaan `7d`. Nilai selain itu dibalas `400`. |
+| `GET /api/dashboard/booking-status?range=` | Ya | Jumlah booking per status (`confirmed`, `pending`, `completed`, `rejected`) yang diajukan dalam `24h`, `7d`, atau `30d` terakhir. Dihitung dari data booking di backend. |
 | `GET /api/visitors/today?q=` | Ya | Pengunjung hari ini. `q` (opsional) memfilter nama, domisili, institusi, jenjang. |
 
 Endpoint yang butuh login membalas `401` bila cookie sesi tidak ada atau tidak valid.
@@ -164,3 +167,5 @@ Frontend (`:3000`) dan backend (`:5000`) sama-sama berhost `localhost`, jadi coo
 - Tipe API ada di dua tempat: `frontend/types/index.ts` dan `backend/src/types/index.ts`. Jika bentuk respons berubah, ubah keduanya.
 - Warna dan font mengikuti desain di `frontend/app/globals.css` (mis. `bg-gold`, `text-ink-soft`); jangan menulis kode hex langsung di komponen.
 - Menu sidebar dan judul halaman diatur di satu tempat: `frontend/lib/navigation.ts`.
+- Data dummy grafik pengunjung mengikuti jam buka museum: **Senin–Jumat 08.00–16.00**, Sabtu dan Minggu tutup (0 pengunjung). Grafik 24 jam menampilkan pola per jam dari hari buka terakhir, sedangkan grafik 30 hari dihitung mundur dari hari ini. Datanya ada di `backend/src/data/dashboard.ts`.
+- Data booking hanya ada satu: `backend/src/data/bookings.ts`. Booking API (`/api/bookings`) dan statistik dashboard (`/api/dashboard`, `/api/dashboard/booking-status`) sama-sama membacanya, jadi menyetujui booking di halaman Booking langsung mengubah angka dashboard. `createdAt` (waktu pengajuan, dihitung dari waktu sekarang) dipakai untuk filter 24 jam, 7 hari, dan 30 hari; `submittedAt` diturunkan darinya sehingga selalu sama. Status yang valid: `pending`, `confirmed`, `completed`, `rejected`. Semua endpoint `/api/bookings` butuh login.

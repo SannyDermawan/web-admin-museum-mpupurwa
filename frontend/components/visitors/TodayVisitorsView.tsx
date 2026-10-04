@@ -1,21 +1,23 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import { useState } from "react";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { CalendarIcon } from "@/components/ui/icons";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/PageState";
+import { SearchField } from "@/components/ui/SearchField";
 import { Table, Td, Th, Tr } from "@/components/ui/Table";
 import { useApiData } from "@/hooks/use-api-data";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { downloadCsv, formatDateLong } from "@/lib/utils";
 import type { TodayVisitorsData } from "@/types";
 
 const COLUMNS = ["Pengunjung", "Domisili", "Asal Sekolah / Institusi", "Tingkat Pendidikan", "Waktu Check-in"];
 
 export function TodayVisitorsView() {
-  // The top bar search box writes ?q=... to the URL.
-  const query = useSearchParams().get("q")?.trim() ?? "";
+  const [search, setSearch] = useState("");
+  const query = useDebouncedValue(search).trim();
   const url = query ? `/api/visitors/today?q=${encodeURIComponent(query)}` : "/api/visitors/today";
   const { data, error, loading, reload } = useApiData<TodayVisitorsData>(url);
 
@@ -29,7 +31,7 @@ export function TodayVisitorsView() {
 
   return (
     <Card>
-      <div className="flex items-center justify-between gap-3.5 border-b border-stone-line px-[22px] py-4">
+      <div className="flex flex-wrap items-center justify-between gap-3.5 border-b border-stone-line px-[22px] py-4">
         {data ? (
           <div className="flex items-center gap-2 rounded-lg border border-stone-line px-3 py-2 text-[13px] font-semibold">
             <CalendarIcon className="size-[15px] text-ink-soft" />
@@ -38,9 +40,17 @@ export function TodayVisitorsView() {
         ) : (
           <div />
         )}
-        <Button variant="outline" onClick={handleDownload} disabled={!data || data.visitors.length === 0}>
-          Unduh CSV
-        </Button>
+        <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2.5">
+          <SearchField
+            value={search}
+            onChange={setSearch}
+            label="Cari pengunjung"
+            placeholder="Cari nama, domisili, atau institusi..."
+          />
+          <Button variant="outline" onClick={handleDownload} disabled={!data || data.visitors.length === 0}>
+            Unduh CSV
+          </Button>
+        </div>
       </div>
 
       {loading && !data ? (

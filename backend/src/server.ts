@@ -18,12 +18,12 @@ app.use(express.json());
 
 // Public: login, logout, forgot password.
 app.use("/api/auth", authRoutes);
-app.use("/api/bookings", bookingsRoutes);
 
 // Protected: need a valid login cookie. Add new modules here.
 app.use("/api/dashboard", requireAuth, dashboardRoutes);
 app.use("/api/visitors", requireAuth, visitorsRoutes);
 app.use("/api/accounts", requireAuth, accountsRoutes);
+app.use("/api/bookings", requireAuth, bookingsRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

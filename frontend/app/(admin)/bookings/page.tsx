@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { apiGet, apiPatch } from "@/lib/api";
 
 type BookingStatus = "pending" | "confirmed" | "rejected";
 type FilterStatus = "semua" | BookingStatus;
@@ -96,11 +97,9 @@ export default function BookingRombonganPage() {
   useEffect(() => {
     async function fetchBookings() {
       try {
-        const res = await fetch("http://localhost:5000/api/bookings");
-        const result = await res.json();
-        if (result.success) {
-          setBookings(result.data);
-        }
+        // apiGet sends the login cookie and uses NEXT_PUBLIC_API_URL (see lib/api.ts).
+        const result = await apiGet<Booking[]>("/api/bookings");
+        setBookings(result.data);
       } catch (error) {
         console.error("Gagal mengambil data booking:", error);
       }
@@ -125,17 +124,10 @@ export default function BookingRombonganPage() {
 
  const updateStatus = async (id: string, status: BookingStatus) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/bookings/${id}/status`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
-      });
-      const result = await res.json();
-      if (result.success) {
-        setBookings((current) =>
-          current.map((booking) => (booking.id === id ? { ...booking, status } : booking))
-        );
-      }
+      await apiPatch(`/api/bookings/${id}/status`, { status });
+      setBookings((current) =>
+        current.map((booking) => (booking.id === id ? { ...booking, status } : booking))
+      );
     } catch (error) {
       console.error("Gagal memperbarui status:", error);
     }

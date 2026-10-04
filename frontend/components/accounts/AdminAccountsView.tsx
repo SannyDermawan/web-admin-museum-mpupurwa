@@ -1,6 +1,5 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { AccountsToolbar } from "@/components/accounts/AccountsToolbar";
 import { AddAdminModal } from "@/components/accounts/AddAdminModal";
@@ -13,8 +12,10 @@ import { Card } from "@/components/ui/Card";
 import { IconButton } from "@/components/ui/IconButton";
 import { EditIcon, TrashIcon } from "@/components/ui/icons";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/PageState";
+import { SearchField } from "@/components/ui/SearchField";
 import { Table, Td, Th, Tr } from "@/components/ui/Table";
 import { useApiData } from "@/hooks/use-api-data";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { ROLE_LABEL, STATUS_LABEL, formatLastLogin } from "@/lib/accounts";
 import { useAuthUser } from "@/lib/auth-storage";
 import type { AdminAccount, AdminAccountsData } from "@/types";
@@ -22,8 +23,8 @@ import type { AdminAccount, AdminAccountsData } from "@/types";
 const COLUMNS = ["Admin", "Peran", "Login terakhir", "Status", "Aksi"];
 
 export function AdminAccountsView() {
-  // The top bar search box writes ?q=... to the URL.
-  const query = useSearchParams().get("q")?.trim() ?? "";
+  const [search, setSearch] = useState("");
+  const query = useDebouncedValue(search).trim();
   const url = query ? `/api/accounts/admins?q=${encodeURIComponent(query)}` : "/api/accounts/admins";
   const { data, error, loading, reload } = useApiData<AdminAccountsData>(url);
   const currentUser = useAuthUser();
@@ -35,6 +36,9 @@ export function AdminAccountsView() {
   return (
     <Card>
       <AccountsToolbar active="admins" action={<Button onClick={() => setAdding(true)}>+ Tambah Admin</Button>} />
+      <div className="flex items-center justify-between gap-3.5 border-b border-stone-line px-[22px] py-4">
+        <SearchField value={search} onChange={setSearch} label="Cari akun admin" placeholder="Cari nama atau email admin..." />
+      </div>
 
       {loading && !data ? (
         <LoadingState label="Memuat akun admin…" />

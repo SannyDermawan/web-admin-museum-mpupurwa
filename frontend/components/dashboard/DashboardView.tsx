@@ -37,7 +37,7 @@ export function DashboardView() {
     );
   }
 
-  const { stats, visitorTrend, bookingStatus, recentVisitors, pendingBookings } = data;
+  const { stats, recentVisitors, pendingBookings } = data;
 
   return (
     <>
@@ -60,8 +60,8 @@ export function DashboardView() {
       </div>
 
       <div className="mb-5 grid items-stretch gap-5 xl:grid-cols-[2fr_1fr]">
-        <VisitorStatistics trend={visitorTrend} />
-        <BookingStatistics counts={bookingStatus} />
+        <VisitorStatistics />
+        <BookingStatistics />
       </div>
 
       <div className="grid items-start gap-5 xl:grid-cols-[1.3fr_1fr]">

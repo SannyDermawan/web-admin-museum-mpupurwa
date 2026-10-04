@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { bookingsData } from "../data/bookings";
+import { BOOKING_STATUSES, BookingStatus, bookingsData } from "../data/bookings";
 
 export const getBookings = (req: Request, res: Response) => {
   res.json({ success: true, data: bookingsData });
@@ -7,7 +7,14 @@ export const getBookings = (req: Request, res: Response) => {
 
 export const updateBookingStatus = (req: Request, res: Response) => {
   const { id } = req.params;
-  const { status } = req.body;
+  const status = req.body?.status;
+
+  if (!BOOKING_STATUSES.includes(status as BookingStatus)) {
+    return res.status(400).json({
+      success: false,
+      message: "Status tidak valid. Gunakan pending, confirmed, completed, atau rejected.",
+    });
+  }
 
   const booking = bookingsData.find((b) => b.id === id);
   if (!booking) {

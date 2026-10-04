@@ -1,49 +1,9 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useRef, useState } from "react";
-import { BellIcon, MenuIcon, SearchIcon } from "@/components/ui/icons";
+import { usePathname } from "next/navigation";
+import { NotificationBell } from "@/components/layout/NotificationBell";
+import { MenuIcon } from "@/components/ui/icons";
 import { findNavItem } from "@/lib/navigation";
-
-/**
- * The search box writes to the `?q=` URL parameter. A page that wants search
- * simply reads `q` (see app/(admin)/visitors/today). Pages that ignore it are unaffected.
- */
-function SearchBox() {
-  const router = useRouter();
-  const pathname = usePathname();
-  const [value, setValue] = useState(useSearchParams().get("q") ?? "");
-  const touched = useRef(false);
-
-  useEffect(() => {
-    if (!touched.current) return;
-    const timer = setTimeout(() => {
-      const params = new URLSearchParams(window.location.search);
-      if (value.trim()) params.set("q", value.trim());
-      else params.delete("q");
-      const query = params.toString();
-      router.replace(query ? `${pathname}?${query}` : pathname);
-    }, 250);
-    return () => clearTimeout(timer);
-  }, [value, pathname, router]);
-
-  return (
-    <div className="hidden w-60 items-center gap-2 rounded-[9px] border border-stone-line bg-offwhite px-3.5 py-[9px] sm:flex">
-      <SearchIcon className="size-[15px] flex-none text-ink-soft" />
-      <input
-        type="text"
-        aria-label="Cari data"
-        placeholder="Cari data..."
-        value={value}
-        onChange={(event) => {
-          touched.current = true;
-          setValue(event.target.value);
-        }}
-        className="w-full bg-transparent text-[13px] text-ink outline-none"
-      />
-    </div>
-  );
-}
 
 export function Navbar({ onMenuClick }: { onMenuClick: () => void }) {
   const pathname = usePathname();
@@ -66,20 +26,7 @@ export function Navbar({ onMenuClick }: { onMenuClick: () => void }) {
         </div>
       </div>
 
-      <div className="flex flex-none items-center gap-3.5">
-        {/* Keyed by path so the box clears when navigating to another page. */}
-        <Suspense fallback={null}>
-          <SearchBox key={pathname} />
-        </Suspense>
-        <button
-          type="button"
-          aria-label="Notifikasi"
-          className="relative flex size-[38px] items-center justify-center rounded-[9px] border border-stone-line"
-        >
-          <BellIcon className="size-[17px] text-ink" />
-          <span className="absolute top-2 right-2 size-[7px] rounded-full border-[1.5px] border-white bg-danger" />
-        </button>
-      </div>
+      <NotificationBell />
     </header>
   );
 }

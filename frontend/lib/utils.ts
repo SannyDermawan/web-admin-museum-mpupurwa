@@ -60,3 +60,16 @@ export function downloadCsv(filename: string, rows: Array<Array<string | number>
   link.click();
   URL.revokeObjectURL(url);
 }
+
+/** "5 menit yang lalu", "3 jam yang lalu", "2 hari yang lalu" ... `now` and `time` are ms since epoch. */
+export function formatRelativeTime(time: number, now: number): string {
+  const seconds = Math.max(0, Math.floor((now - time) / 1000));
+  if (seconds < 60) return "Baru saja";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} menit yang lalu`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} jam yang lalu`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days} hari yang lalu`;
+  return `${Math.floor(days / 30)} bulan yang lalu`;
+}

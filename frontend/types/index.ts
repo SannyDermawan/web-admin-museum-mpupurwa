@@ -84,13 +84,27 @@ export type PendingBookingSummary = {
   participantCount: number;
   /** ISO date (YYYY-MM-DD) */
   visitDate: string;
+  /** ISO timestamp the booking was submitted */
+  createdAt: string;
 };
 
-/** Visitors on one day of the "7 hari terakhir" chart */
+/** Time ranges of the dashboard charts: last 24 hours, 7 days and 30 days */
+export type DashboardRange = "24h" | "7d" | "30d";
+
+/** The visitor chart uses the same ranges (24h is per hour, 7d and 30d are per day) */
+export type VisitorTrendRange = DashboardRange;
+
+/** One point of the visitor chart */
 export type VisitorTrendPoint = {
-  /** Day name shown on the chart axis, e.g. "Senin" */
-  day: string;
+  /** Axis label: "13.00" (24h), "Senin" (7d) or "12 Sep" (30d) */
+  label: string;
   visitors: number;
+};
+
+/** GET /api/dashboard/visitor-trend?range=... (oldest point first) */
+export type VisitorTrendData = {
+  range: VisitorTrendRange;
+  points: VisitorTrendPoint[];
 };
 
 /** Number of group bookings per status (the donut on the dashboard) */
@@ -101,11 +115,14 @@ export type BookingStatusCounts = {
   rejected: number;
 };
 
+/** GET /api/dashboard/booking-status?range=... */
+export type BookingStatusData = {
+  range: DashboardRange;
+  counts: BookingStatusCounts;
+};
+
 export type DashboardData = {
   stats: DashboardStats;
-  /** Oldest day first, 7 entries */
-  visitorTrend: VisitorTrendPoint[];
-  bookingStatus: BookingStatusCounts;
   recentVisitors: Visitor[];
   pendingBookings: PendingBookingSummary[];
 };
