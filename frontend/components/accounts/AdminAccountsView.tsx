@@ -35,10 +35,15 @@ export function AdminAccountsView() {
 
   return (
     <Card>
-      <AccountsToolbar active="admins" action={<Button onClick={() => setAdding(true)}>+ Tambah Admin</Button>} />
-      <div className="flex items-center justify-between gap-3.5 border-b border-stone-line px-[22px] py-4">
-        <SearchField value={search} onChange={setSearch} label="Cari akun admin" placeholder="Cari nama atau email admin..." />
-      </div>
+      <AccountsToolbar
+        active="admins"
+        action={
+          <>
+            <SearchField value={search} onChange={setSearch} label="Cari akun admin" placeholder="Cari nama atau email admin..." />
+            <Button onClick={() => setAdding(true)}>+ Tambah Admin</Button>
+          </>
+        }
+      />
 
       {loading && !data ? (
         <LoadingState label="Memuat akun admin…" />

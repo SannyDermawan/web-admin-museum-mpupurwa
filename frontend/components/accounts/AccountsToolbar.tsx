@@ -9,14 +9,14 @@ const TABS = [
 
 type AccountsToolbarProps = {
   active: (typeof TABS)[number]["key"];
-  /** Right side of the row, e.g. the "+ Tambah Admin" button */
+  /** Right side of the row: the page search box and, on the admin page, the "+ Tambah Admin" button */
   action?: ReactNode;
 };
 
 /** Top row of the account card: the "Pengunjung" / "Admin" tabs. Each tab is its own page. */
 export function AccountsToolbar({ active, action }: AccountsToolbarProps) {
   return (
-    <div className="flex items-center justify-between gap-3.5 border-b border-stone-line px-[22px] py-4">
+    <div className="flex flex-wrap items-center justify-between gap-3.5 border-b border-stone-line px-[22px] py-4">
       <nav aria-label="Jenis akun" className="flex gap-1.5">
         {TABS.map((tab) => (
           <Link
@@ -32,7 +32,7 @@ export function AccountsToolbar({ active, action }: AccountsToolbarProps) {
           </Link>
         ))}
       </nav>
-      {action}
+      {action && <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2.5">{action}</div>}
     </div>
   );
 }
