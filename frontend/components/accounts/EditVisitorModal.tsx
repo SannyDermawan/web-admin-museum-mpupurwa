@@ -1,7 +1,8 @@
 "use client";
 
 import { useId, useState } from "react";
-import type { FormEvent } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm, useWatch } from "react-hook-form";
 import { FormAlert } from "@/components/accounts/FormAlert";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -9,7 +10,8 @@ import { Modal } from "@/components/ui/Modal";
 import { Select } from "@/components/ui/Select";
 import { apiPatch } from "@/lib/api";
 import { EDUCATION_LEVELS } from "@/lib/accounts";
-import type { EducationLevel, UpdateVisitorAccountRequest, VisitorAccount } from "@/types";
+import { editVisitorSchema, type EditVisitorFormValues } from "@/lib/validations/accounts";
+import type { UpdateVisitorAccountRequest, VisitorAccount } from "@/types";
 
 type Props = {
   account: VisitorAccount;
@@ -18,51 +20,44 @@ type Props = {
   onSaved: () => void;
 };
 
-type Errors = Partial<Record<"name" | "domicile" | "institution", string>>;
-
 /** Popup "Edit Akun Pengunjung". Mount it only while an account is being edited; it starts from `account`. */
 export function EditVisitorModal({ account, onClose, onSaved }: Props) {
   const formId = useId();
-  const [name, setName] = useState(account.name);
-  const [domicile, setDomicile] = useState(account.domicile);
-  const [institution, setInstitution] = useState(account.institution ?? "");
-  const [educationLevel, setEducationLevel] = useState<EducationLevel>(account.educationLevel);
-  const [errors, setErrors] = useState<Errors>({});
   const [serverError, setServerError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const {
+    register,
+    handleSubmit,
+    control,
+    trigger,
+    formState: { errors, isSubmitting },
+  } = useForm<EditVisitorFormValues>({
+    resolver: zodResolver(editVisitorSchema),
+    defaultValues: {
+      name: account.name,
+      domicile: account.domicile,
+      institution: account.institution ?? "",
+      educationLevel: account.educationLevel,
+    },
+  });
+  const educationLevel = useWatch({ control, name: "educationLevel" });
 
-  function validate(): Errors {
-    const found: Errors = {};
-    if (!name.trim()) found.name = "Nama lengkap wajib diisi.";
-    if (!domicile.trim()) found.domicile = "Domisili wajib diisi.";
-    if (educationLevel !== "Umum" && !institution.trim()) {
-      found.institution = "Asal sekolah / institusi wajib diisi untuk pelajar dan mahasiswa.";
-    }
-    return found;
-  }
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const found = validate();
-    setErrors(found);
+  async function onSubmit(values: EditVisitorFormValues) {
     setServerError(null);
-    if (Object.keys(found).length > 0) return;
-
-    setSubmitting(true);
     try {
       const payload: UpdateVisitorAccountRequest = {
-        name: name.trim(),
-        domicile: domicile.trim(),
-        institution: institution.trim() || null,
-        educationLevel,
+        name: values.name,
+        domicile: values.domicile,
+        institution: values.institution || null,
+        educationLevel: values.educationLevel,
       };
       await apiPatch(`/api/accounts/visitors/${account.id}`, payload);
       onSaved();
     } catch (error) {
       setServerError(error instanceof Error ? error.message : "Gagal menyimpan perubahan.");
-      setSubmitting(false);
     }
   }
+
+  const levelField = register("educationLevel");
 
   return (
     <Modal
@@ -74,41 +69,38 @@ export function EditVisitorModal({ account, onClose, onSaved }: Props) {
           <Button variant="outline" className="flex-1 p-[11px]!" onClick={onClose}>
             Batal
           </Button>
-          <Button type="submit" form={formId} className="flex-1 p-[11px]!" disabled={submitting}>
-            {submitting ? "Menyimpan…" : "Simpan Perubahan"}
+          <Button type="submit" form={formId} className="flex-1 p-[11px]!" disabled={isSubmitting}>
+            {isSubmitting ? "Menyimpan…" : "Simpan Perubahan"}
           </Button>
         </>
       }
     >
-      <form id={formId} noValidate onSubmit={handleSubmit}>
+      <form id={formId} noValidate onSubmit={handleSubmit(onSubmit)}>
         <Input
           id={`${formId}-name`}
           label="Nama Lengkap"
-          value={name}
-          error={errors.name}
+          error={errors.name?.message}
           autoFocus
-          onChange={(event) => setName(event.target.value)}
+          {...register("name")}
         />
-        <Input
-          id={`${formId}-domicile`}
-          label="Domisili"
-          value={domicile}
-          error={errors.domicile}
-          onChange={(event) => setDomicile(event.target.value)}
-        />
+        <Input id={`${formId}-domicile`} label="Domisili" error={errors.domicile?.message} {...register("domicile")} />
         <Input
           id={`${formId}-institution`}
           label="Asal Sekolah / Institusi"
-          value={institution}
-          error={errors.institution}
+          error={errors.institution?.message}
           placeholder={educationLevel === "Umum" ? "—" : undefined}
-          onChange={(event) => setInstitution(event.target.value)}
+          {...register("institution")}
         />
         <Select
           id={`${formId}-level`}
           label="Tingkat Pendidikan"
-          value={educationLevel}
-          onChange={(event) => setEducationLevel(event.target.value as EducationLevel)}
+          error={errors.educationLevel?.message}
+          {...levelField}
+          onChange={async (event) => {
+            await levelField.onChange(event);
+            // Re-check the institution right away so its error appears or clears.
+            await trigger("institution");
+          }}
         >
           {EDUCATION_LEVELS.map((level) => (
             <option key={level} value={level}>
