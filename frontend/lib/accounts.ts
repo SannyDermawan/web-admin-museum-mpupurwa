@@ -15,8 +15,6 @@ export const STATUS_LABEL: Record<AdminStatus, string> = {
   inactive: "Nonaktif",
 };
 
-export const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 const MUSEUM_TIMEZONE = "Asia/Jakarta";
 
 function dayKey(date: Date): string {

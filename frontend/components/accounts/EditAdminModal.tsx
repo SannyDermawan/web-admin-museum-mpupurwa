@@ -1,7 +1,8 @@
 "use client";
 
 import { useId, useState } from "react";
-import type { FormEvent } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 import { FormAlert } from "@/components/accounts/FormAlert";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -9,6 +10,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Select } from "@/components/ui/Select";
 import { apiPatch } from "@/lib/api";
 import { ROLE_LABEL, STATUS_LABEL } from "@/lib/accounts";
+import { editAdminSchema, type EditAdminFormValues } from "@/lib/validations/accounts";
 import type { AdminAccount, AdminStatus, UpdateAdminRequest, UserRole } from "@/types";
 
 type Props = {
@@ -24,30 +26,24 @@ type Props = {
  */
 export function EditAdminModal({ account, onClose, onSaved }: Props) {
   const formId = useId();
-  const [name, setName] = useState(account.name);
-  const [role, setRole] = useState<UserRole>(account.role);
-  const [status, setStatus] = useState<AdminStatus>(account.status);
-  const [nameError, setNameError] = useState<string>();
   const [serverError, setServerError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<EditAdminFormValues>({
+    resolver: zodResolver(editAdminSchema),
+    defaultValues: { name: account.name, role: account.role, status: account.status },
+  });
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function onSubmit(values: EditAdminFormValues) {
     setServerError(null);
-    if (!name.trim()) {
-      setNameError("Nama lengkap wajib diisi.");
-      return;
-    }
-    setNameError(undefined);
-
-    setSubmitting(true);
     try {
-      const payload: UpdateAdminRequest = { name: name.trim(), role, status };
+      const payload: UpdateAdminRequest = { name: values.name, role: values.role, status: values.status };
       await apiPatch(`/api/accounts/admins/${account.id}`, payload);
       onSaved();
     } catch (error) {
       setServerError(error instanceof Error ? error.message : "Gagal menyimpan perubahan.");
-      setSubmitting(false);
     }
   }
 
@@ -61,40 +57,29 @@ export function EditAdminModal({ account, onClose, onSaved }: Props) {
           <Button variant="outline" className="flex-1 p-[11px]!" onClick={onClose}>
             Batal
           </Button>
-          <Button type="submit" form={formId} className="flex-1 p-[11px]!" disabled={submitting}>
-            {submitting ? "Menyimpan…" : "Simpan Perubahan"}
+          <Button type="submit" form={formId} className="flex-1 p-[11px]!" disabled={isSubmitting}>
+            {isSubmitting ? "Menyimpan…" : "Simpan Perubahan"}
           </Button>
         </>
       }
     >
-      <form id={formId} noValidate onSubmit={handleSubmit}>
+      <form id={formId} noValidate onSubmit={handleSubmit(onSubmit)}>
         <Input
           id={`${formId}-name`}
           label="Nama Lengkap"
-          value={name}
-          error={nameError}
+          error={errors.name?.message}
           autoFocus
-          onChange={(event) => setName(event.target.value)}
+          {...register("name")}
         />
         <Input id={`${formId}-email`} label="Email" value={account.email} readOnly className="bg-offwhite text-ink-soft" />
-        <Select
-          id={`${formId}-role`}
-          label="Peran"
-          value={role}
-          onChange={(event) => setRole(event.target.value as UserRole)}
-        >
+        <Select id={`${formId}-role`} label="Peran" error={errors.role?.message} {...register("role")}>
           {(Object.keys(ROLE_LABEL) as UserRole[]).map((value) => (
             <option key={value} value={value}>
               {ROLE_LABEL[value]}
             </option>
           ))}
         </Select>
-        <Select
-          id={`${formId}-status`}
-          label="Status"
-          value={status}
-          onChange={(event) => setStatus(event.target.value as AdminStatus)}
-        >
+        <Select id={`${formId}-status`} label="Status" error={errors.status?.message} {...register("status")}>
           {(Object.keys(STATUS_LABEL) as AdminStatus[]).map((value) => (
             <option key={value} value={value}>
               {STATUS_LABEL[value]}
