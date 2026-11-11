@@ -1,8 +1,9 @@
-import type { SelectHTMLAttributes } from "react";
+import type { ComponentProps } from "react";
 import { inputStyles } from "@/components/ui/Input";
 import { cn } from "@/lib/utils";
 
-type SelectProps = SelectHTMLAttributes<HTMLSelectElement> & {
+// ComponentProps (not SelectHTMLAttributes) so `ref` is accepted: react-hook-form's register() passes one.
+type SelectProps = ComponentProps<"select"> & {
   label?: string;
   error?: string;
 };

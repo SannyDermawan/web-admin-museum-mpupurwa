@@ -1,10 +1,11 @@
-import type { InputHTMLAttributes, ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 export const inputStyles =
   "w-full rounded-lg border border-stone-line bg-white px-3 py-2.5 text-[13.5px] text-ink outline-none focus:border-gold";
 
-type InputProps = InputHTMLAttributes<HTMLInputElement> & {
+// ComponentProps (not InputHTMLAttributes) so `ref` is accepted: react-hook-form's register() passes one.
+type InputProps = ComponentProps<"input"> & {
   label?: string;
   error?: string;
   /** Rendered inside the field, on the right (e.g. the "Tampilkan" toggle) */

@@ -59,7 +59,7 @@ function loginTime(daysAgo: number, time: string): string {
   return `${day.toISOString().slice(0, 10)}T${time}:00+07:00`;
 }
 
-// ADM-001 is the account that logs in (see data/auth.ts), so the list can mark it as "Akun kamu".
+// ADM-001 is the account that logs in (it is the seeded super admin, see prisma/seed.ts), so the list can mark it as "Akun kamu".
 const adminAccounts: AdminAccount[] = [
   { id: "ADM-001", name: "Rizal Pradana", email: "rizal@mpupurwa.id", role: "super_admin", status: "active", lastLoginAt: loginTime(0, "08:02") },
   { id: "ADM-002", name: "Dewi Anggraini", email: "dewi@mpupurwa.id", role: "admin", status: "active", lastLoginAt: loginTime(1, "15:40") },

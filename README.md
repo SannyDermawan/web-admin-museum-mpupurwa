@@ -113,8 +113,10 @@ File `.env` dan `.env.local` **tidak masuk Git**. Yang masuk hanya file `.env.ex
 ```
 .
 ├── frontend/                 Next.js
-│   ├── app/                  halaman: (auth)/ login dan lupa sandi, (admin)/ halaman admin
-│   ├── components/           ui/, layout/, auth/, dashboard/, visitors/
+│   ├── app/                  halaman: (auth)/ login dan lupa sandi, (admin)/ halaman admin.
+│   │                         Tiap halaman punya folder components/ sejajar dengan page.tsx
+│   │                         (isinya section halaman itu), mis. dashboard/page.tsx + dashboard/components/
+│   ├── components/           komponen bersama saja: ui/ (Button, Modal, Table, ...) dan layout/ (Sidebar, Navbar, ...)
 │   ├── hooks/                use-api-data.ts
 │   ├── lib/                  api.ts, config.ts, auth-storage.ts, navigation.ts, utils.ts
 │   └── types/                tipe bersama (kontrak API)

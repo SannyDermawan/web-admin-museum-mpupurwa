@@ -20,4 +20,8 @@ export const config = {
   frontendUrl: process.env.FRONTEND_URL ?? "http://localhost:3000",
   /** Signs the login cookie. */
   sessionSecret: getSessionSecret(),
+  /** Vercel Blob (cloud storage) token for collection photos and PDFs. Leave it empty to switch uploads off. */
+  blobToken: process.env.BLOB_READ_WRITE_TOKEN ?? "",
 };
+
+export const isBlobConfigured = Boolean(config.blobToken);

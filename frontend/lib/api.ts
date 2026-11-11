@@ -3,7 +3,7 @@
 // They unwrap the { success, data } envelope and throw ApiRequestError (with a
 // user-readable message) when the call fails.
 
-import { clearAuthUser } from "@/lib/auth-storage";
+import { clearAuthUser } from "@/lib/user-auth";
 import { API_URL } from "@/lib/config";
 import type { ApiResponse } from "@/types";
 
@@ -55,6 +55,11 @@ export function apiPost<T>(path: string, payload?: unknown, init?: RequestInit) 
     headers: { "Content-Type": "application/json", ...init?.headers },
     body: payload === undefined ? undefined : JSON.stringify(payload),
   });
+}
+
+/** Sends a form with files (multipart). The browser sets the Content-Type, so none is passed here. */
+export function apiPostForm<T>(path: string, form: FormData, init?: RequestInit) {
+  return request<T>(path, { ...init, method: "POST", body: form });
 }
 
 export function apiPatch<T>(path: string, payload?: unknown, init?: RequestInit) {

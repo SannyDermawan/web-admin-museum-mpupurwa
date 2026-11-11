@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { AdminAccountsView } from "@/components/accounts/AdminAccountsView";
+import { AdminAccountsView } from "./components/AdminAccountsView";
 
 export const metadata: Metadata = { title: "Manajemen Akun · Admin" };
 

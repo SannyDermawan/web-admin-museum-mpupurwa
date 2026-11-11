@@ -129,3 +129,6 @@ export type DashboardData = {
 
 // Account management (Manajemen Akun) types live in their own file.
 export * from "./accounts";
+
+// Cloud storage (Vercel Blob) upload types live in their own file.
+export * from "./uploads";

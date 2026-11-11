@@ -1,0 +1,127 @@
+// Skema database Admin Web Museum Mpu Purwa (MySQL / MariaDB).
+// Perubahan skema HANYA lewat migrasi: ubah file ini, lalu jalankan `npm run db:migrate -- --name <nama-perubahan>`.
+// Jangan mengubah tabel lewat phpMyAdmin / GUI, supaya riwayat perubahannya tetap tercatat di prisma/migrations.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum AdminRole {
+  super_admin
+  admin
+}
+
+enum AdminStatus {
+  active
+  inactive
+}
+
+enum EducationLevel {
+  Mahasiswa
+  Pelajar
+  Umum
+}
+
+enum BookingStatus {
+  pending
+  confirmed
+  completed
+  rejected
+}
+
+/// Akun pengelola museum yang masuk ke admin web.
+model Admin {
+  id           String      @id @db.VarChar(10) // format API: ADM-001
+  name         String      @db.VarChar(100)
+  email        String      @unique @db.VarChar(150)
+  passwordHash String      @map("password_hash") @db.VarChar(255) // hash bcrypt, bukan sandi asli
+  role         AdminRole   @default(admin)
+  status       AdminStatus @default(active)
+  lastLoginAt  DateTime?   @map("last_login_at")
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @default(now()) @updatedAt @map("updated_at")
+
+  @@map("admins")
+}
+
+/// Akun pengunjung yang mendaftar lewat aplikasi mobile.
+model VisitorAccount {
+  id             String         @id @db.VarChar(10) // format API: ACC-001
+  name           String         @db.VarChar(100)
+  phone          String         @db.VarChar(20)
+  email          String         @unique @db.VarChar(150)
+  domicile       String         @db.VarChar(80)
+  institution    String?        @db.VarChar(150)
+  educationLevel EducationLevel @map("education_level")
+  registeredAt   DateTime       @map("registered_at") @db.Date
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @default(now()) @updatedAt @map("updated_at")
+  visits         Visit[]
+
+  @@map("visitor_accounts")
+}
+
+/// Satu baris per check-in. Nama, domisili, institusi, dan jenjang disalin saat check-in (snapshot),
+/// jadi riwayat tidak berubah walau akunnya diedit atau dihapus.
+model Visit {
+  id               String          @id @db.VarChar(12) // format API: VIS-001
+  visitorAccountId String?         @map("visitor_account_id") @db.VarChar(10)
+  visitorName      String          @map("visitor_name") @db.VarChar(100)
+  domicile         String          @db.VarChar(80)
+  institution      String?         @db.VarChar(150)
+  educationLevel   EducationLevel  @map("education_level")
+  visitDate        DateTime        @map("visit_date") @db.Date
+  checkInTime      DateTime        @map("check_in_time") @db.Time(0)
+  createdAt        DateTime        @default(now()) @map("created_at")
+  // Akun dihapus -> riwayat check-in tetap ada, hanya tautannya yang dikosongkan.
+  visitorAccount   VisitorAccount? @relation(fields: [visitorAccountId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@index([visitDate, checkInTime])
+  @@index([visitorAccountId])
+  @@map("visits")
+}
+
+/// Pengajuan kunjungan rombongan (sekolah, kampus, instansi).
+model Booking {
+  id               String        @id @db.VarChar(30) // mengikuti id di API: sdn1, smpn4, ...
+  institution      String        @db.VarChar(150)
+  contactName      String        @map("contact_name") @db.VarChar(100)
+  phone            String        @db.VarChar(20)
+  visitDate        DateTime      @map("visit_date") @db.Date
+  participantCount Int           @map("participant_count") @db.UnsignedInt
+  notes            String?       @db.Text
+  status           BookingStatus @default(pending)
+  createdAt        DateTime      @default(now()) @map("created_at") // dasar filter 24 jam / 7 hari / 30 hari
+  updatedAt        DateTime      @default(now()) @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([visitDate])
+  @@map("bookings")
+}
+
+/// Koleksi arca dan prasasti yang tampil di aplikasi mobile.
+/// photoUrl dan pdfUrl berisi link file di Vercel Blob; videoUrl berisi link YouTube. NULL = belum ada.
+model Collection {
+  id         Int      @id @default(autoincrement()) @db.UnsignedInt
+  name       String   @db.VarChar(150)
+  era        String   @db.VarChar(50)
+  period     String?  @db.VarChar(80)
+  origin     String?  @db.VarChar(120)
+  material   String?  @db.VarChar(100)
+  dimensions String?  @db.VarChar(120)
+  meaning    String?  @db.Text
+  photoUrl   String?  @map("photo_url") @db.VarChar(500)
+  videoUrl   String?  @map("video_url") @db.VarChar(255)
+  pdfUrl     String?  @map("pdf_url") @db.VarChar(500)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@index([era])
+  @@map("collections")
+}

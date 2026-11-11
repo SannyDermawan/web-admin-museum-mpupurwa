@@ -16,7 +16,5 @@ export function fail(res: Response, status: number, message: string) {
   return res.status(status).json(body);
 }
 
-/** The JSON body as a plain object, or {} when it is missing or not an object. */
-export function bodyAsRecord(body: unknown): Record<string, unknown> {
-  return body && typeof body === "object" && !Array.isArray(body) ? (body as Record<string, unknown>) : {};
-}
+// Kept here so existing imports keep working; the implementation lives in lib/validate.ts.
+export { bodyAsRecord } from "../lib/validate";

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { VisitorAccountsView } from "@/components/accounts/VisitorAccountsView";
+import { VisitorAccountsView } from "./components/VisitorAccountsView";
 
 export const metadata: Metadata = { title: "Manajemen Akun · Pengunjung" };
 
