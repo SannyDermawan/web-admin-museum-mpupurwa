@@ -10,7 +10,7 @@ import {
   updateAdminAccount,
   updateVisitorAccount,
 } from "../data/accounts";
-import type { AdminStatus, EducationLevel, User, UserRole } from "../types";
+import type { AdminStatus, EducationLevel, UserRole } from "../types";
 import { bodyAsRecord, fail, ok } from "../utils/response";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -112,7 +112,7 @@ export function patchAdminAccount(req: Request, res: Response) {
   if (!role) return fail(res, 400, "Peran tidak valid.");
   if (!status) return fail(res, 400, "Status tidak valid.");
 
-  const self = (res.locals.user as User).id === current.id;
+  const self = req.user?.id === current.id;
   if (self && (role !== current.role || status !== current.status)) {
     return fail(res, 400, "Peran dan status akun sendiri tidak dapat diubah.");
   }
@@ -124,7 +124,7 @@ export function patchAdminAccount(req: Request, res: Response) {
 // DELETE /api/accounts/admins/:id
 export function removeAdminAccount(req: Request, res: Response) {
   const id = idParam(req);
-  if ((res.locals.user as User).id === id) return fail(res, 400, "Akun yang sedang kamu pakai tidak dapat dihapus.");
+  if (req.user?.id === id) return fail(res, 400, "Akun yang sedang kamu pakai tidak dapat dihapus.");
   if (!deleteAdminAccount(id)) return fail(res, 404, "Akun admin tidak ditemukan.");
   return ok(res, null, { message: "Akun admin berhasil dihapus." });
 }

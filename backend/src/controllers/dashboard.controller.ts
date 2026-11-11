@@ -1,6 +1,5 @@
 import type { Request, Response } from "express";
-import { getBookingStatusCounts } from "../data/bookings";
-import { DASHBOARD_RANGES, getDashboardData, getVisitorTrend } from "../data/dashboard";
+import { DASHBOARD_RANGES, getBookingStatusCounts, getDashboardData, getVisitorTrend } from "../services/dashboard.service";
 import type { DashboardRange } from "../types";
 import { fail, ok } from "../utils/response";
 
@@ -13,20 +12,20 @@ function readRange(req: Request): DashboardRange | null {
 }
 
 // GET /api/dashboard
-export function getDashboard(_req: Request, res: Response) {
-  return ok(res, getDashboardData());
+export async function getDashboard(_req: Request, res: Response) {
+  return ok(res, await getDashboardData());
 }
 
 // GET /api/dashboard/visitor-trend?range=24h|7d|30d
-export function getVisitorTrendChart(req: Request, res: Response) {
+export async function getVisitorTrendChart(req: Request, res: Response) {
   const range = readRange(req);
   if (!range) return fail(res, 400, INVALID_RANGE);
-  return ok(res, getVisitorTrend(range));
+  return ok(res, await getVisitorTrend(range));
 }
 
 // GET /api/dashboard/booking-status?range=24h|7d|30d
-export function getBookingStatusChart(req: Request, res: Response) {
+export async function getBookingStatusChart(req: Request, res: Response) {
   const range = readRange(req);
   if (!range) return fail(res, 400, INVALID_RANGE);
-  return ok(res, { range, counts: getBookingStatusCounts(range) });
+  return ok(res, { range, counts: await getBookingStatusCounts(range) });
 }

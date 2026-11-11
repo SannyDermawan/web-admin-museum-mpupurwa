@@ -8,7 +8,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { LogoutIcon } from "@/components/ui/icons";
 import { useApiData } from "@/hooks/use-api-data";
 import { apiPost } from "@/lib/api";
-import { clearAuthUser } from "@/lib/auth-storage";
+import { clearAuthUser } from "@/lib/user-auth";
 import { NAV_ITEMS, findNavItem } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 import type { DashboardData, User } from "@/types";

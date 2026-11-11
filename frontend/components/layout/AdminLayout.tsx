@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Sidebar } from "@/components/layout/Sidebar";
-import { useAuthUser } from "@/lib/auth-storage";
+import { useAuthUser } from "@/lib/user-auth";
 
 /**
  * Sidebar + top bar + content area, and the login check for every admin page.
