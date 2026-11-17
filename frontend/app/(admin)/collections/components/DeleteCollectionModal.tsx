@@ -1,11 +1,11 @@
 "use client";
 
-import React from "react";
+import { useState } from "react";
 
 interface DeleteCollectionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: () => Promise<void> | void;
   itemName?: string;
 }
 
@@ -15,7 +15,29 @@ export default function DeleteCollectionModal({
   onConfirm,
   itemName = "Koleksi ini",
 }: DeleteCollectionModalProps) {
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
   if (!isOpen) return null;
+
+  const handleClose = () => {
+    if (isDeleting) return;
+    setErrorMessage(null);
+    onClose();
+  };
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    setErrorMessage(null);
+    try {
+      await onConfirm();
+      onClose();
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Gagal menghapus koleksi.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-[#1F1A0F]/40 z-[100] flex items-center justify-center p-6">
@@ -39,26 +61,34 @@ export default function DeleteCollectionModal({
             <b className="text-[#241A0F]">{itemName}</b> akan hilang dari katalog
             di aplikasi pengunjung. Tindakan ini tidak bisa dibatalkan.
           </p>
+
+          {errorMessage && (
+            <div
+              role="alert"
+              className="mt-3.5 rounded-lg border border-[#F1CFCD] bg-[#FBEAE9] px-3 py-2 text-[12px] text-[#B3261E]"
+            >
+              {errorMessage}
+            </div>
+          )}
         </div>
 
         {/* Modal Footer */}
         <div className="flex gap-2.5 p-4 px-6 pb-[22px]">
           <button
             type="button"
-            onClick={onClose}
-            className="flex-1 py-[11px] text-[12.5px] font-bold rounded-lg bg-white border border-[#E6E2D8] text-[#241A0F] hover:bg-gray-50 transition-colors"
+            disabled={isDeleting}
+            onClick={handleClose}
+            className="flex-1 py-[11px] text-[12.5px] font-bold rounded-lg bg-white border border-[#E6E2D8] text-[#241A0F] hover:bg-gray-50 transition-colors disabled:opacity-60"
           >
             Batal
           </button>
           <button
             type="button"
-            onClick={() => {
-              onConfirm();
-              onClose();
-            }}
-            className="flex-1 py-[11px] text-[12.5px] font-bold rounded-lg bg-[#B3261E] text-white hover:opacity-90 transition-opacity"
+            disabled={isDeleting}
+            onClick={handleDelete}
+            className="flex-1 py-[11px] text-[12.5px] font-bold rounded-lg bg-[#B3261E] text-white hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            Ya, hapus koleksi
+            {isDeleting ? "Menghapus…" : "Ya, hapus koleksi"}
           </button>
         </div>
       </div>

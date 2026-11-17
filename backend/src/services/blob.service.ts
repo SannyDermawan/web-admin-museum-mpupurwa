@@ -1,7 +1,7 @@
 // Stores collection photos and PDFs in Vercel Blob (cloud storage) and returns their public links.
 // The token (BLOB_READ_WRITE_TOKEN) only ever lives on the server.
 
-import { put } from "@vercel/blob";
+import { del, put } from "@vercel/blob";
 import { config } from "../config";
 import type { UploadKind, UploadResult } from "../types";
 
@@ -68,4 +68,14 @@ export async function uploadToBlob(kind: UploadKind, file: IncomingFile): Promis
   });
 
   return { url: blob.url, pathname: blob.pathname, size: file.size, contentType: file.mimetype };
+}
+
+/** Menghapus file lama di Vercel Blob. Kegagalan hanya dicatat di log agar tidak membatalkan request utama. */
+export async function deleteFromBlob(url: string | null | undefined): Promise<void> {
+  if (!url || !config.blobToken) return;
+  try {
+    await del(url, { token: config.blobToken });
+  } catch (error) {
+    console.error("[Blob] Gagal menghapus file lama:", url, error);
+  }
 }

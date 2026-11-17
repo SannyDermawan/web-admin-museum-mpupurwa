@@ -12,6 +12,7 @@ import bookingsRoutes from "./routes/bookings.routes";
 import { dashboardRoutes } from "./routes/dashboard.routes";
 import { uploadsRoutes } from "./routes/uploads.routes";
 import { visitorsRoutes } from "./routes/visitors.routes";
+import { collectionsRoutes } from "./routes/collections.routes";
 
 export const app = express();
 
@@ -27,6 +28,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/dashboard", requireAuth, dashboardRoutes);
 app.use("/api/visitors", requireAuth, visitorsRoutes);
 app.use("/api/bookings", requireAuth, bookingsRoutes);
+app.use("/api/collections", requireAuth, collectionsRoutes);
 app.use("/api/uploads", requireAuth, uploadsRoutes);
 
 // Accounts: every admin may see visitor accounts, but only a super admin may manage admin accounts.

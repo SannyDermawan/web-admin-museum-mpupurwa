@@ -1,4 +1,4 @@
-export type BookingStatus = "pending" | "confirmed" | "rejected";
+export type BookingStatus = "pending" | "confirmed" | "completed" | "rejected";
 export type FilterStatus = "semua" | BookingStatus;
 
 export type Booking = {
@@ -8,14 +8,15 @@ export type Booking = {
   date: string;
   participants: number;
   status: BookingStatus;
-  email: string;
+  email: string | null;
   phone: string;
-  purpose: string;
-  notes: string;
+  purpose: string | null;
+  notes: string | null;
 };
 
 export const statusLabels: Record<BookingStatus, string> = {
   pending: "Menunggu",
   confirmed: "Dikonfirmasi",
+  completed: "Selesai",
   rejected: "Ditolak",
 };

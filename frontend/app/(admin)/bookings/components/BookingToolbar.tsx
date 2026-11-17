@@ -4,6 +4,7 @@ const FILTERS: [FilterStatus, string][] = [
   ["semua", "Semua"],
   ["pending", "Menunggu"],
   ["confirmed", "Dikonfirmasi"],
+  ["completed", "Selesai"],
   ["rejected", "Ditolak"],
 ];
 
