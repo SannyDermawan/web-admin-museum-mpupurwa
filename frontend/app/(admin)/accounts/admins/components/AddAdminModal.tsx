@@ -13,11 +13,32 @@ import { ROLE_LABEL } from "@/lib/accounts";
 import { addAdminSchema, type AddAdminFormValues } from "@/lib/validations/accounts";
 import type { AdminAccount, CreateAdminRequest, UserRole } from "@/types";
 
-const PASSWORD_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+const UPPERCASE = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+const LOWERCASE = "abcdefghijkmnpqrstuvwxyz";
+const DIGITS = "23456789";
+const PASSWORD_CHARS = UPPERCASE + LOWERCASE + DIGITS;
 
-/** "Mpu-7Kd92x": easy to read out loud, so there is no 0/O or 1/l/I. */
+/** Random integer from 0 up to (not including) `max`, from the browser's secure random generator. */
+function randomBelow(max: number): number {
+  return crypto.getRandomValues(new Uint32Array(1))[0] % max;
+}
+
+function pick(chars: string): string {
+  return chars[randomBelow(chars.length)];
+}
+
+/**
+ * "Mpu-7Kd92x": easy to read out loud, so there is no 0/O or 1/l/I.
+ * The 6 random characters always hold an uppercase letter, a lowercase letter and a digit,
+ * so the password passes the backend rule (validatePassword) every time.
+ */
 function generateTemporaryPassword(): string {
-  const picks = Array.from({ length: 6 }, () => PASSWORD_CHARS[Math.floor(Math.random() * PASSWORD_CHARS.length)]);
+  const picks = [pick(UPPERCASE), pick(LOWERCASE), pick(DIGITS), pick(PASSWORD_CHARS), pick(PASSWORD_CHARS), pick(PASSWORD_CHARS)];
+  // Fisher-Yates shuffle, so the three required characters are not always first.
+  for (let i = picks.length - 1; i > 0; i--) {
+    const j = randomBelow(i + 1);
+    [picks[i], picks[j]] = [picks[j], picks[i]];
+  }
   return `Mpu-${picks.join("")}`;
 }
 

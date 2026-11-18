@@ -1,28 +1,33 @@
+// Controllers of the account management module: read the request, validate it, call the service, send the response.
+// No database queries and no business rules here: those live in services/accounts.service.ts.
+
 import type { Request, Response } from "express";
+import { isOneOf, isValidEmail, readText, bodyAsRecord } from "../lib/validate";
+import { validatePassword } from "../lib/validatePassword";
 import {
-  adminEmailExists,
+  AccountError,
   createAdminAccount,
   deleteAdminAccount,
   deleteVisitorAccount,
-  findAdminAccount,
   listAdminAccounts,
   listVisitorAccounts,
   updateAdminAccount,
   updateVisitorAccount,
-} from "../data/accounts";
+} from "../services/accounts.service";
 import type { AdminStatus, EducationLevel, UserRole } from "../types";
-import { bodyAsRecord, fail, ok } from "../utils/response";
+import { fail, ok } from "../utils/response";
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const EDUCATION_LEVELS: EducationLevel[] = ["Mahasiswa", "Pelajar", "Umum"];
-const ROLES: UserRole[] = ["admin", "super_admin"];
-const STATUSES: AdminStatus[] = ["active", "inactive"];
+const EDUCATION_LEVELS: readonly EducationLevel[] = ["Mahasiswa", "Pelajar", "Umum"];
+const ROLES: readonly UserRole[] = ["admin", "super_admin"];
+const STATUSES: readonly AdminStatus[] = ["active", "inactive"];
+
+// Limits follow the column sizes in prisma/schema.prisma, so too-long text is a 400 and not a database error.
 const MAX_NAME_LENGTH = 100;
-const MIN_PASSWORD_LENGTH = 8;
-
-function text(value: unknown): string {
-  return typeof value === "string" ? value.trim() : "";
-}
+const MAX_EMAIL_LENGTH = 150;
+const MAX_DOMICILE_LENGTH = 80;
+const MAX_INSTITUTION_LENGTH = 150;
+// bcrypt only uses the first 72 bytes of a password.
+const MAX_PASSWORD_BYTES = 72;
 
 function queryParam(req: Request): string | undefined {
   return typeof req.query.q === "string" ? req.query.q : undefined;
@@ -33,98 +38,132 @@ function idParam(req: Request): string {
   return String(req.params.id);
 }
 
+/** The logged-in admin. requireAuth runs before every account route, so this is only a safety net for the types. */
+function actorId(req: Request): string {
+  if (!req.user) throw new AccountError(400, "Silakan masuk terlebih dahulu.");
+  return req.user.id;
+}
+
+/** A rule of the module was broken -> answer with its status. Anything else is a real error and goes to the error handler (500). */
+function handleError(res: Response, error: unknown) {
+  if (error instanceof AccountError) return fail(res, error.status, error.message);
+  throw error;
+}
+
+/** Message for an invalid name, or null. */
+function checkName(name: string): string | null {
+  if (!name) return "Nama lengkap wajib diisi.";
+  if (name.length > MAX_NAME_LENGTH) return `Nama lengkap maksimal ${MAX_NAME_LENGTH} karakter.`;
+  return null;
+}
+
 // ---------- Visitor accounts ----------
 
 // GET /api/accounts/visitors?q=amanda   (q is optional)
-export function getVisitorAccounts(req: Request, res: Response) {
-  return ok(res, { visitors: listVisitorAccounts(queryParam(req)) });
+export async function getVisitorAccounts(req: Request, res: Response) {
+  return ok(res, { visitors: await listVisitorAccounts(queryParam(req)) });
 }
 
 // PATCH /api/accounts/visitors/:id   body: { name, domicile, institution, educationLevel }
-export function patchVisitorAccount(req: Request, res: Response) {
+export async function patchVisitorAccount(req: Request, res: Response) {
   const body = bodyAsRecord(req.body);
-  const name = text(body.name);
-  const domicile = text(body.domicile);
-  const institutionText = text(body.institution);
+  const name = readText(body.name);
+  const domicile = readText(body.domicile);
+  const institutionText = readText(body.institution);
   const institution = institutionText && institutionText !== "—" ? institutionText : null;
-  const educationLevel = EDUCATION_LEVELS.find((level) => level === body.educationLevel);
+  const educationLevel = body.educationLevel;
 
-  if (!name) return fail(res, 400, "Nama lengkap wajib diisi.");
-  if (name.length > MAX_NAME_LENGTH) return fail(res, 400, `Nama lengkap maksimal ${MAX_NAME_LENGTH} karakter.`);
+  const nameError = checkName(name);
+  if (nameError) return fail(res, 400, nameError);
   if (!domicile) return fail(res, 400, "Domisili wajib diisi.");
-  if (!educationLevel) return fail(res, 400, "Tingkat pendidikan tidak valid.");
+  if (domicile.length > MAX_DOMICILE_LENGTH) return fail(res, 400, `Domisili maksimal ${MAX_DOMICILE_LENGTH} karakter.`);
+  if (!isOneOf(educationLevel, EDUCATION_LEVELS)) return fail(res, 400, "Tingkat pendidikan tidak valid.");
   if (educationLevel !== "Umum" && !institution) {
     return fail(res, 400, "Asal sekolah / institusi wajib diisi untuk pelajar dan mahasiswa.");
   }
+  if (institution && institution.length > MAX_INSTITUTION_LENGTH) {
+    return fail(res, 400, `Asal sekolah / institusi maksimal ${MAX_INSTITUTION_LENGTH} karakter.`);
+  }
 
-  const updated = updateVisitorAccount(idParam(req), { name, domicile, institution, educationLevel });
-  if (!updated) return fail(res, 404, "Akun pengunjung tidak ditemukan.");
-  return ok(res, updated, { message: "Perubahan akun berhasil disimpan." });
+  try {
+    const updated = await updateVisitorAccount(idParam(req), { name, domicile, institution, educationLevel });
+    return ok(res, updated, { message: "Perubahan akun berhasil disimpan." });
+  } catch (error) {
+    return handleError(res, error);
+  }
 }
 
 // DELETE /api/accounts/visitors/:id
-export function removeVisitorAccount(req: Request, res: Response) {
-  if (!deleteVisitorAccount(idParam(req))) return fail(res, 404, "Akun pengunjung tidak ditemukan.");
-  return ok(res, null, { message: "Akun pengunjung berhasil dihapus." });
+export async function removeVisitorAccount(req: Request, res: Response) {
+  try {
+    await deleteVisitorAccount(idParam(req));
+    return ok(res, null, { message: "Akun pengunjung berhasil dihapus." });
+  } catch (error) {
+    return handleError(res, error);
+  }
 }
 
 // ---------- Admin accounts ----------
 
 // GET /api/accounts/admins?q=dewi   (q is optional)
-export function getAdminAccounts(req: Request, res: Response) {
-  return ok(res, { admins: listAdminAccounts(queryParam(req)) });
+export async function getAdminAccounts(req: Request, res: Response) {
+  return ok(res, { admins: await listAdminAccounts(queryParam(req)) });
 }
 
 // POST /api/accounts/admins   body: { name, email, role, temporaryPassword }
-export function postAdminAccount(req: Request, res: Response) {
+export async function postAdminAccount(req: Request, res: Response) {
   const body = bodyAsRecord(req.body);
-  const name = text(body.name);
-  const email = text(body.email);
-  const role = ROLES.find((item) => item === body.role);
-  const temporaryPassword = typeof body.temporaryPassword === "string" ? body.temporaryPassword : "";
+  const name = readText(body.name);
+  const email = readText(body.email);
+  const role = body.role;
+  const temporaryPassword = body.temporaryPassword;
 
-  if (!name) return fail(res, 400, "Nama lengkap wajib diisi.");
-  if (name.length > MAX_NAME_LENGTH) return fail(res, 400, `Nama lengkap maksimal ${MAX_NAME_LENGTH} karakter.`);
+  const nameError = checkName(name);
+  if (nameError) return fail(res, 400, nameError);
   if (!email) return fail(res, 400, "Email wajib diisi.");
-  if (!EMAIL_PATTERN.test(email)) return fail(res, 400, "Format email tidak valid.");
-  if (!role) return fail(res, 400, "Peran tidak valid.");
-  if (temporaryPassword.length < MIN_PASSWORD_LENGTH) {
-    return fail(res, 400, `Kata sandi sementara minimal ${MIN_PASSWORD_LENGTH} karakter.`);
+  if (!isValidEmail(email)) return fail(res, 400, "Format email tidak valid.");
+  if (email.length > MAX_EMAIL_LENGTH) return fail(res, 400, `Email maksimal ${MAX_EMAIL_LENGTH} karakter.`);
+  if (!isOneOf(role, ROLES)) return fail(res, 400, "Peran tidak valid.");
+  const passwordError = validatePassword(temporaryPassword);
+  if (passwordError) return fail(res, 400, passwordError);
+  if (Buffer.byteLength(temporaryPassword as string) > MAX_PASSWORD_BYTES) {
+    return fail(res, 400, `Kata sandi maksimal ${MAX_PASSWORD_BYTES} karakter.`);
   }
-  if (adminEmailExists(email)) return fail(res, 409, "Email sudah dipakai akun admin lain.");
 
-  const created = createAdminAccount({ name, email, role });
-  return ok(res, created, { status: 201, message: "Akun admin berhasil dibuat." });
+  try {
+    const created = await createAdminAccount({ name, email, role, temporaryPassword: temporaryPassword as string });
+    return ok(res, created, { status: 201, message: "Akun admin berhasil dibuat." });
+  } catch (error) {
+    return handleError(res, error);
+  }
 }
 
 // PATCH /api/accounts/admins/:id   body: { name, role, status }
-export function patchAdminAccount(req: Request, res: Response) {
-  const current = findAdminAccount(idParam(req));
-  if (!current) return fail(res, 404, "Akun admin tidak ditemukan.");
-
+export async function patchAdminAccount(req: Request, res: Response) {
   const body = bodyAsRecord(req.body);
-  const name = text(body.name);
-  const role = ROLES.find((item) => item === body.role);
-  const status = STATUSES.find((item) => item === body.status);
+  const name = readText(body.name);
+  const role = body.role;
+  const status = body.status;
 
-  if (!name) return fail(res, 400, "Nama lengkap wajib diisi.");
-  if (name.length > MAX_NAME_LENGTH) return fail(res, 400, `Nama lengkap maksimal ${MAX_NAME_LENGTH} karakter.`);
-  if (!role) return fail(res, 400, "Peran tidak valid.");
-  if (!status) return fail(res, 400, "Status tidak valid.");
+  const nameError = checkName(name);
+  if (nameError) return fail(res, 400, nameError);
+  if (!isOneOf(role, ROLES)) return fail(res, 400, "Peran tidak valid.");
+  if (!isOneOf(status, STATUSES)) return fail(res, 400, "Status tidak valid.");
 
-  const self = req.user?.id === current.id;
-  if (self && (role !== current.role || status !== current.status)) {
-    return fail(res, 400, "Peran dan status akun sendiri tidak dapat diubah.");
+  try {
+    const updated = await updateAdminAccount(actorId(req), idParam(req), { name, role, status });
+    return ok(res, updated, { message: "Perubahan akun berhasil disimpan." });
+  } catch (error) {
+    return handleError(res, error);
   }
-
-  const updated = updateAdminAccount(current.id, { name, role, status });
-  return ok(res, updated, { message: "Perubahan akun berhasil disimpan." });
 }
 
 // DELETE /api/accounts/admins/:id
-export function removeAdminAccount(req: Request, res: Response) {
-  const id = idParam(req);
-  if (req.user?.id === id) return fail(res, 400, "Akun yang sedang kamu pakai tidak dapat dihapus.");
-  if (!deleteAdminAccount(id)) return fail(res, 404, "Akun admin tidak ditemukan.");
-  return ok(res, null, { message: "Akun admin berhasil dihapus." });
+export async function removeAdminAccount(req: Request, res: Response) {
+  try {
+    await deleteAdminAccount(actorId(req), idParam(req));
+    return ok(res, null, { message: "Akun admin berhasil dihapus." });
+  } catch (error) {
+    return handleError(res, error);
+  }
 }
