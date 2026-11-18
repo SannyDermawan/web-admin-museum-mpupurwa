@@ -150,13 +150,13 @@ async function main() {
 
   // ---------- bookings (waktu pengajuan dihitung mundur dari sekarang) ----------
   const hoursAgo = (hours: number) => new Date(Date.now() - hours * 60 * 60 * 1000);
-  await prisma.booking.createMany({
+await prisma.booking.createMany({
     data: [
-      { id: "sdn1", institution: "SDN Merjosari 1 Malang", contactName: "Dewi Saraswati", phone: "0813-2456-7890", visitDate: daysFrom(today, 7), participantCount: 65, notes: "Butuh pemandu untuk siswa SD", status: "pending", createdAt: hoursAgo(6 * 24) },
-      { id: "smpn4", institution: "SMPN 4 Malang", contactName: "Budi Hartono", phone: "0812-3456-7891", visitDate: daysFrom(today, 10), participantCount: 48, notes: "Kunjungan edukasi sejarah", status: "pending", createdAt: hoursAgo(3 * 24) },
-      { id: "tk", institution: "TK Tunas Bangsa", contactName: "Sri Wahyuni", phone: "0815-6789-0123", visitDate: daysFrom(today, 13), participantCount: 20, notes: "Siswa PAUD dan pendamping", status: "pending", createdAt: hoursAgo(5) },
-      { id: "ub", institution: "Universitas Brawijaya — Prodi Sejarah", contactName: "Anisa Rahma", phone: "0821-9876-5432", visitDate: daysFrom(today, 3), participantCount: 30, notes: "Penelitian lapangan", status: "confirmed", createdAt: hoursAgo(12 * 24) },
-      { id: "sman1", institution: "SMAN 1 Batu", contactName: "Rudi Setiawan", phone: "0857-1234-5678", visitDate: daysFrom(today, -2), participantCount: 55, notes: null, status: "rejected", createdAt: hoursAgo(25 * 24) },
+      { id: "sdn1", institution: "SDN Merjosari 1 Malang", contactName: "Dewi Saraswati", email: "dewi.sdn1@sekolah.sch.id", phone: "0813-2456-7890", visitDate: daysFrom(today, 7), participantCount: 65, purpose: "Kunjungan studi wisata sejarah lokal", notes: "Butuh pemandu untuk siswa SD", status: "pending", createdAt: hoursAgo(6 * 24) },
+      { id: "smpn4", institution: "SMPN 4 Malang", contactName: "Budi Hartono", email: "budi.hartono@smpn4mlg.sch.id", phone: "0812-3456-7891", visitDate: daysFrom(today, 10), participantCount: 48, purpose: "Tugas mata pelajaran IPS", notes: "Kunjungan edukasi sejarah", status: "pending", createdAt: hoursAgo(3 * 24) },
+      { id: "tk", institution: "TK Tunas Bangsa", contactName: "Sri Wahyuni", email: "tktunasbangsa@gmail.com", phone: "0815-6789-0123", visitDate: daysFrom(today, 13), participantCount: 20, purpose: "Pengenalan budaya dan museum", notes: "Siswa PAUD dan pendamping", status: "pending", createdAt: hoursAgo(5) },
+      { id: "ub", institution: "Universitas Brawijaya — Prodi Sejarah", contactName: "Anisa Rahma", email: "anisa.rahma@ub.ac.id", phone: "0821-9876-5432", visitDate: daysFrom(today, 3), participantCount: 30, purpose: "Observasi arca era Singosari", notes: "Penelitian lapangan", status: "confirmed", createdAt: hoursAgo(12 * 24) },
+      { id: "sman1", institution: "SMAN 1 Batu", contactName: "Rudi Setiawan", email: "rudi.sman1batu@sch.id", phone: "0857-1234-5678", visitDate: daysFrom(today, -2), participantCount: 55, purpose: "Karya wisata kelas XI", notes: null, status: "rejected", createdAt: hoursAgo(25 * 24) },
     ],
   });
 

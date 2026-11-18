@@ -39,9 +39,9 @@ export function CollectionsTable({ items, onEdit, onDelete }: CollectionsTablePr
         <tbody className="divide-y divide-[#E6E2D8] text-[13.5px]">
           {items.map((row) => (
             <tr key={row.id} className="hover:bg-[#FCFBF8]">
-              <td className="py-3.5 px-[22px] font-bold text-[#241A0F]">{row.nama}</td>
+              <td className="py-3.5 px-[22px] font-bold text-[#241A0F]">{row.name}</td>
               <td className="py-3.5 px-[22px]">{row.era}</td>
-              <td className="py-3.5 px-[22px]">{row.material}</td>
+              <td className="py-3.5 px-[22px]">{row.material || "-"}</td>
               <td className="py-3.5 px-[22px]">
                 <MediaBadge status={row.statusMedia} />
               </td>

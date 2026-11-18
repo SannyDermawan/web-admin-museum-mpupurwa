@@ -91,9 +91,11 @@ model Booking {
   id               String        @id @db.VarChar(30) // mengikuti id di API: sdn1, smpn4, ...
   institution      String        @db.VarChar(150)
   contactName      String        @map("contact_name") @db.VarChar(100)
+  email            String?       @db.VarChar(150)
   phone            String        @db.VarChar(20)
   visitDate        DateTime      @map("visit_date") @db.Date
   participantCount Int           @map("participant_count") @db.UnsignedInt
+  purpose          String?       @db.VarChar(200)
   notes            String?       @db.Text
   status           BookingStatus @default(pending)
   createdAt        DateTime      @default(now()) @map("created_at") // dasar filter 24 jam / 7 hari / 30 hari

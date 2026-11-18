@@ -40,10 +40,10 @@ export function BookingDetailModal({ booking, onClose, onApprove, onReject }: Bo
             <div><span>Penanggung jawab</span><strong>{booking.contact}</strong></div>
             <div><span>Tanggal kunjungan</span><strong>{booking.date}</strong></div>
             <div><span>Jumlah peserta</span><strong>{booking.participants} orang</strong></div>
-            <div><span>Email</span><strong>{booking.email}</strong></div>
+            <div><span>Email</span><strong>{booking.email || "-"}</strong></div>
             <div><span>No. telepon</span><strong>{booking.phone}</strong></div>
-            <div><span>Tujuan kunjungan</span><strong>{booking.purpose}</strong></div>
-            <div><span>Catatan</span><strong>{booking.notes}</strong></div>
+            <div><span>Tujuan kunjungan</span><strong>{booking.purpose || "-"}</strong></div>
+            <div><span>Catatan</span><strong>{booking.notes || "-"}</strong></div>
             <div>
               <span>Status</span>
               <strong><span className={`status-badge ${booking.status}`}>{statusLabels[booking.status]}</span></strong>

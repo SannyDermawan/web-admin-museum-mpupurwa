@@ -53,12 +53,12 @@ export function BookingView() {
   };
 
   const counts: Record<FilterStatus, number> = {
-    semua: bookings.length,
-    pending: bookings.filter((booking) => booking.status === "pending").length,
-    confirmed: bookings.filter((booking) => booking.status === "confirmed").length,
-    rejected: bookings.filter((booking) => booking.status === "rejected").length,
-  };
-
+  semua: bookings.length,
+  pending: bookings.filter((booking) => booking.status === "pending").length,
+  confirmed: bookings.filter((booking) => booking.status === "confirmed").length,
+  completed: bookings.filter((booking) => booking.status === "completed").length,
+  rejected: bookings.filter((booking) => booking.status === "rejected").length,
+};
   return (
     <main className="booking-page">
       <section className="panel">

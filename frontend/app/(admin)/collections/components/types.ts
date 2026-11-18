@@ -2,27 +2,28 @@ import type { CollectionFormValues } from "@/lib/validations/collections";
 
 export type MediaStatus = "Lengkap" | "Belum ada video" | "Belum ada PDF" | "Belum ada video dan PDF";
 
+/** Bentuk item koleksi dari endpoint GET /api/collections */
 export interface CollectionItem {
-  id: string;
-  nama: string;
+  id: number;
+  name: string;
   era: string;
-  material: string;
+  material: string | null;
   statusMedia: MediaStatus;
-  /** Vercel Blob links, filled when the collection was saved with a photo or a PDF. */
-  fotoUrl?: string | null;
-  pdfUrl?: string | null;
-  videoUrl?: string;
 }
 
-/** What the form hands over on save: the text fields plus the Vercel Blob links of the uploaded files. */
+/** Bentuk detail koleksi dari endpoint GET /api/collections/:id */
+export interface CollectionDetail extends CollectionItem {
+  period: string | null;
+  origin: string | null;
+  dimensions: string | null;
+  meaning: string | null;
+  photoUrl: string | null;
+  videoUrl: string | null;
+  pdfUrl: string | null;
+}
+
+/** Data dari CollectionFormModal saat tombol Simpan diklik */
 export type CollectionFormData = Omit<CollectionFormValues, "foto" | "pdfDoc"> & {
   fotoUrl: string | null;
   pdfUrl: string | null;
 };
-
-/** Same rule as the v_collections view in the database (schema.sql). */
-export function getMediaStatus(videoUrl?: string | null, pdfUrl?: string | null): MediaStatus {
-  if (videoUrl && pdfUrl) return "Lengkap";
-  if (!videoUrl && !pdfUrl) return "Belum ada video dan PDF";
-  return videoUrl ? "Belum ada PDF" : "Belum ada video";
-}
