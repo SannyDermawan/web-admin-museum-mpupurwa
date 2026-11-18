@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import CollectionFormModal from "./CollectionFormModal";
 import { CollectionsTable } from "./CollectionsTable";
 import { CollectionsToolbar } from "./CollectionsToolbar";
@@ -37,22 +37,20 @@ export function CollectionsView() {
   const [loading, setLoading] = useState<boolean>(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const fetchCollections = useCallback(async () => {
-    setLoading(true);
-    setErrorMessage(null);
-    try {
-      const result = await apiGet<CollectionItem[]>("/api/collections");
-      setCollections(result.data);
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Gagal memuat data koleksi.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
+  // `loading` sudah true saat pertama render, jadi setState hanya terjadi setelah respons datang.
   useEffect(() => {
+    async function fetchCollections() {
+      try {
+        const result = await apiGet<CollectionItem[]>("/api/collections");
+        setCollections(result.data);
+      } catch (error) {
+        setErrorMessage(error instanceof Error ? error.message : "Gagal memuat data koleksi.");
+      } finally {
+        setLoading(false);
+      }
+    }
     fetchCollections();
-  }, [fetchCollections]);
+  }, []);
 
   // Buka Modal Tambah Koleksi
   const handleOpenAdd = () => {
