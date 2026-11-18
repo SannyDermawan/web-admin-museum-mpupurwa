@@ -1,10 +1,13 @@
+"use client";
+
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { useAuthUser } from "@/lib/user-auth";
 import { cn } from "@/lib/utils";
 
 const TABS = [
-  { key: "visitors", label: "Pengunjung", href: "/accounts/visitors" },
-  { key: "admins", label: "Admin", href: "/accounts/admins" },
+  { key: "visitors", label: "Pengunjung", href: "/accounts/visitors", superAdminOnly: false },
+  { key: "admins", label: "Admin", href: "/accounts/admins", superAdminOnly: true },
 ] as const;
 
 type AccountsToolbarProps = {
@@ -15,10 +18,15 @@ type AccountsToolbarProps = {
 
 /** Top row of the account card: the "Pengunjung" / "Admin" tabs. Each tab is its own page. */
 export function AccountsToolbar({ active, action }: AccountsToolbarProps) {
+  // The "Admin" tab is for super admins only: the backend answers 403 on /api/accounts/admins for everyone else.
+  // Hidden until the role is known, so a regular admin never sees it flash.
+  const isSuperAdmin = useAuthUser()?.role === "super_admin";
+  const tabs = TABS.filter((tab) => !tab.superAdminOnly || isSuperAdmin);
+
   return (
     <div className="flex flex-wrap items-center justify-between gap-3.5 border-b border-stone-line px-[22px] py-4">
       <nav aria-label="Jenis akun" className="flex gap-1.5">
-        {TABS.map((tab) => (
+        {tabs.map((tab) => (
           <Link
             key={tab.key}
             href={tab.href}
