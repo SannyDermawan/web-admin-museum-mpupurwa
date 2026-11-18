@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { isBlobConfigured } from "../config";
+import { logger } from "../lib/logger";
 import { checkFile, isUploadKind, uploadToBlob } from "../services/blob.service";
 import { fail, ok } from "../utils/response";
 
@@ -18,7 +19,7 @@ export async function uploadFile(req: Request, res: Response) {
     return ok(res, await uploadToBlob(kind, req.file), { status: 201, message: "File berhasil diunggah." });
   } catch (error) {
     // Vercel Blob refused or could not be reached. Log the details here, tell the client only what it needs.
-    console.error("Vercel Blob upload failed:", error);
+    logger.error({ err: error }, "Vercel Blob upload failed");
     return fail(res, 502, "Gagal menyimpan file ke penyimpanan cloud. Coba lagi beberapa saat lagi.");
   }
 }

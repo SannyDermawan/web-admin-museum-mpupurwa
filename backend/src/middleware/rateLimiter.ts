@@ -12,7 +12,10 @@ export const loginLimiter = rateLimit({
   skipSuccessfulRequests: true,
   standardHeaders: "draft-8",
   legacyHeaders: false,
-  handler: (_req, res) => fail(res, 429, "Terlalu banyak percobaan masuk. Coba lagi dalam 15 menit."),
+  handler: (req, res) => {
+    req.log.warn({ event: "rate_limited", endpoint: "login" }, "Too many login attempts");
+    return fail(res, 429, "Terlalu banyak percobaan masuk. Coba lagi dalam 15 menit.");
+  },
 });
 
 export const forgotPasswordLimiter = rateLimit({
@@ -20,5 +23,8 @@ export const forgotPasswordLimiter = rateLimit({
   limit: 10,
   standardHeaders: "draft-8",
   legacyHeaders: false,
-  handler: (_req, res) => fail(res, 429, "Terlalu banyak permintaan. Coba lagi dalam 15 menit."),
+  handler: (req, res) => {
+    req.log.warn({ event: "rate_limited", endpoint: "forgot-password" }, "Too many reset requests");
+    return fail(res, 429, "Terlalu banyak permintaan. Coba lagi dalam 15 menit.");
+  },
 });

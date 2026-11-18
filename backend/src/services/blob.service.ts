@@ -3,6 +3,7 @@
 
 import { del, put } from "@vercel/blob";
 import { config } from "../config";
+import { logger } from "../lib/logger";
 import type { UploadKind, UploadResult } from "../types";
 
 type KindRules = {
@@ -19,8 +20,8 @@ const RULES: Record<UploadKind, KindRules> = {
   foto: {
     folder: "koleksi/foto",
     mimeTypes: ["image/jpeg", "image/png"],
-    maxBytes: 5 * 1024 * 1024,
-    label: "Foto harus berformat JPG atau PNG dan maksimal 5 MB.",
+    maxBytes: 4 * 1024 * 1024, // Vercel Functions refuse a request body over 4.5 MB, so files stay under 4 MB
+    label: "Foto harus berformat JPG atau PNG dan maksimal 4 MB.",
     signatures: [
       [0xff, 0xd8, 0xff], // JPEG
       [0x89, 0x50, 0x4e, 0x47], // PNG
@@ -29,8 +30,8 @@ const RULES: Record<UploadKind, KindRules> = {
   dokumen: {
     folder: "koleksi/dokumen",
     mimeTypes: ["application/pdf"],
-    maxBytes: 10 * 1024 * 1024,
-    label: "Dokumen harus berformat PDF dan maksimal 10 MB.",
+    maxBytes: 4 * 1024 * 1024,
+    label: "Dokumen harus berformat PDF dan maksimal 4 MB.",
     signatures: [[0x25, 0x50, 0x44, 0x46]], // %PDF
   },
 };
@@ -76,6 +77,6 @@ export async function deleteFromBlob(url: string | null | undefined): Promise<vo
   try {
     await del(url, { token: config.blobToken });
   } catch (error) {
-    console.error("[Blob] Gagal menghapus file lama:", url, error);
+    logger.warn({ err: error, url }, "Gagal menghapus file lama di Vercel Blob");
   }
 }
