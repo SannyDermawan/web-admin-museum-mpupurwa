@@ -28,3 +28,27 @@ export const forgotPasswordLimiter = rateLimit({
     return fail(res, 429, "Terlalu banyak permintaan. Coba lagi dalam 15 menit.");
   },
 });
+
+/** Daftar dan minta OTP pengunjung: mencegah orang membanjiri email seseorang dengan kode. */
+export const visitorAuthLimiter = rateLimit({
+  windowMs: FIFTEEN_MINUTES,
+  limit: 15,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  handler: (req, res) => {
+    req.log.warn({ event: "rate_limited", endpoint: "visitor-auth" }, "Too many visitor register/login requests");
+    return fail(res, 429, "Terlalu banyak permintaan kode. Coba lagi dalam 15 menit.");
+  },
+});
+
+/** Verifikasi OTP: lapisan di atas batas 5 tebakan per kode (kode 6 digit tidak boleh bisa ditebak dengan banyak percobaan). */
+export const visitorVerifyLimiter = rateLimit({
+  windowMs: FIFTEEN_MINUTES,
+  limit: 30,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  handler: (req, res) => {
+    req.log.warn({ event: "rate_limited", endpoint: "visitor-verify-otp" }, "Too many OTP verification attempts");
+    return fail(res, 429, "Terlalu banyak percobaan verifikasi. Coba lagi dalam 15 menit.");
+  },
+});

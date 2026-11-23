@@ -53,19 +53,37 @@ model Admin {
 
 /// Akun pengunjung yang mendaftar lewat aplikasi mobile.
 model VisitorAccount {
-  id             String         @id @db.VarChar(10) // format API: ACC-001
-  name           String         @db.VarChar(100)
-  phone          String         @db.VarChar(20)
-  email          String         @unique @db.VarChar(150)
-  domicile       String         @db.VarChar(80)
-  institution    String?        @db.VarChar(150)
-  educationLevel EducationLevel @map("education_level")
-  registeredAt   DateTime       @map("registered_at") @db.Date
-  createdAt      DateTime       @default(now()) @map("created_at")
-  updatedAt      DateTime       @default(now()) @updatedAt @map("updated_at")
-  visits         Visit[]
+  id              String         @id @db.VarChar(10) // format API: ACC-001
+  name            String         @db.VarChar(100)
+  phone           String         @db.VarChar(20)
+  email           String         @unique @db.VarChar(150)
+  domicile        String         @db.VarChar(80)
+  institution     String?        @db.VarChar(150)
+  educationLevel  EducationLevel @map("education_level")
+  registeredAt    DateTime       @map("registered_at") @db.Date
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @default(now()) @updatedAt @map("updated_at")
+  // Diisi saat pengunjung berhasil memasukkan kode OTP yang dikirim ke emailnya. NULL = belum terverifikasi.
+  emailVerifiedAt DateTime?      @map("email_verified_at")
+  visits          Visit[]
+  otpCodes        VisitorOtp[]
 
   @@map("visitor_accounts")
+}
+
+/// Kode OTP login/daftar pengunjung (aplikasi mobile). Yang disimpan hanya hash-nya, bukan kodenya.
+model VisitorOtp {
+  id        Int            @id @default(autoincrement())
+  accountId String         @map("account_id") @db.VarChar(10)
+  codeHash  String         @map("code_hash") @db.VarChar(64)
+  expiresAt DateTime       @map("expires_at")
+  /// Jumlah tebakan salah. Setelah batas tercapai, kode ini mati dan pengunjung harus meminta kode baru.
+  attempts  Int            @default(0)
+  createdAt DateTime       @default(now()) @map("created_at")
+  account   VisitorAccount @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([accountId, createdAt])
+  @@map("visitor_otps")
 }
 
 /// Satu baris per check-in. Nama, domisili, institusi, dan jenjang disalin saat check-in (snapshot),

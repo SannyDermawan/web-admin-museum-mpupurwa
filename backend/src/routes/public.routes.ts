@@ -11,6 +11,9 @@ import {
   listPublicBookings,
   listPublicCollections,
 } from "../controllers/public.controller";
+import { login, me, register, verifyOtp } from "../controllers/visitorAuth.controller";
+import { visitorAuthLimiter, visitorVerifyLimiter } from "../middleware/rateLimiter";
+import { optionalVisitor, requireVisitor } from "../middleware/requireVisitor";
 import { fail } from "../utils/response";
 
 export const publicRoutes = Router();
@@ -31,4 +34,10 @@ publicRoutes.get("/collections", listPublicCollections);
 publicRoutes.get("/collections/:id", getPublicCollection);
 publicRoutes.post("/bookings", writeLimiter, createPublicBooking);
 publicRoutes.get("/bookings", listPublicBookings);
-publicRoutes.post("/visits", writeLimiter, createPublicVisit);
+publicRoutes.post("/visits", writeLimiter, optionalVisitor, createPublicVisit);
+
+// Pendaftaran dan login pengunjung (OTP lewat email). Token dikirim sebagai `Authorization: Bearer <token>`.
+publicRoutes.post("/auth/register", visitorAuthLimiter, register);
+publicRoutes.post("/auth/login", visitorAuthLimiter, login);
+publicRoutes.post("/auth/verify-otp", visitorVerifyLimiter, verifyOtp);
+publicRoutes.get("/auth/me", requireVisitor, me);

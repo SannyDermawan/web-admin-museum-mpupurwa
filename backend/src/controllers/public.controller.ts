@@ -171,23 +171,41 @@ export async function createPublicVisit(req: Request, res: Response, next: NextF
       return fail(res, 400, "Pindai QR di pintu masuk museum untuk check-in.");
     }
 
-    const visitorName = readText(body.name);
-    if (!visitorName) return fail(res, 400, "Nama pengunjung wajib diisi.");
-    if (visitorName.length > 100) return fail(res, 400, "Nama maksimal 100 karakter.");
+    // Pengunjung yang sudah login (token Bearer): identitasnya diambil dari akun, bukan dari isian aplikasi,
+    // supaya check-in tidak bisa memakai nama orang lain, dan riwayatnya terhubung ke akun.
+    const account = req.visitor;
+    let visitorName: string;
+    let domicile: string;
+    let institution: string;
+    let level: (typeof EDUCATION_LEVELS)[number];
 
-    const domicile = readText(body.domicile);
-    if (!domicile) return fail(res, 400, "Domisili wajib diisi.");
-    if (domicile.length > 80) return fail(res, 400, "Domisili maksimal 80 karakter.");
+    if (account) {
+      visitorName = account.name;
+      domicile = account.domicile;
+      institution = account.institution ?? "";
+      level = account.educationLevel;
+    } else {
+      visitorName = readText(body.name);
+      if (!visitorName) return fail(res, 400, "Nama pengunjung wajib diisi.");
+      if (visitorName.length > 100) return fail(res, 400, "Nama maksimal 100 karakter.");
 
-    const institution = readText(body.institution);
-    if (institution.length > 150) return fail(res, 400, "Institusi maksimal 150 karakter.");
+      domicile = readText(body.domicile);
+      if (!domicile) return fail(res, 400, "Domisili wajib diisi.");
+      if (domicile.length > 80) return fail(res, 400, "Domisili maksimal 80 karakter.");
 
-    const level = body.educationLevel ?? "Umum";
-    if (!isOneOf(level, EDUCATION_LEVELS)) return fail(res, 400, "Jenjang harus Mahasiswa, Pelajar, atau Umum.");
+      institution = readText(body.institution);
+      if (institution.length > 150) return fail(res, 400, "Institusi maksimal 150 karakter.");
 
-    // Satu pengunjung (nama + domisili) hanya tercatat sekali per hari.
+      const requested = body.educationLevel ?? "Umum";
+      if (!isOneOf(requested, EDUCATION_LEVELS)) return fail(res, 400, "Jenjang harus Mahasiswa, Pelajar, atau Umum.");
+      level = requested;
+    }
+
+    // Satu pengunjung hanya tercatat sekali per hari: per akun jika login, jika tidak per (nama + domisili).
     const today = dateOnly(todayInMuseumTimezone());
-    const dupe = await prisma.visit.findFirst({ where: { visitDate: today, visitorName, domicile } });
+    const dupe = await prisma.visit.findFirst({
+      where: account ? { visitDate: today, visitorAccountId: account.id } : { visitDate: today, visitorName, domicile },
+    });
     if (dupe) return ok(res, { id: dupe.id, alreadyRecorded: true }, { message: "Kunjungan hari ini sudah tercatat." });
 
     // Jam masuk dalam zona waktu museum, disimpan sebagai kolom TIME.
@@ -200,6 +218,7 @@ export async function createPublicVisit(req: Request, res: Response, next: NextF
     const created = await prisma.visit.create({
       data: {
         id: newVisitId(),
+        visitorAccountId: account?.id ?? null,
         visitorName,
         domicile,
         institution: institution || null,
