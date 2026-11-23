@@ -1,5 +1,9 @@
 // Builds the Express app: JSON parser, CORS, and the routers. server.ts only starts it.
 
+// Pulls in the `req.user` type. Nothing imports express.d.ts, and Vercel only type-checks the files reachable from
+// this one (it ignores tsconfig "include"), so without this line the Vercel build fails with TS2339 on req.user.
+/// <reference path="./types/express.d.ts" />
+
 import cors from "cors";
 import express from "express";
 import helmet from "helmet";
