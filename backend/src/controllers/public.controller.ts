@@ -11,6 +11,8 @@
 
 import { randomBytes } from "node:crypto";
 import type { NextFunction, Request, Response } from "express";
+import { config } from "../config";
+import { verifyCheckinQr } from "../lib/checkinQr";
 import { prisma } from "../lib/prisma";
 import { bodyAsRecord, isOneOf, isValidEmail, readText } from "../lib/validate";
 import { dateOnly, todayInMuseumTimezone } from "../services/dates";
@@ -157,6 +159,17 @@ export async function listPublicBookings(req: Request, res: Response, next: Next
 export async function createPublicVisit(req: Request, res: Response, next: NextFunction) {
   try {
     const body = bodyAsRecord(req.body);
+
+    // QR di pintu masuk: bertanda tangan dan hanya berlaku pada hari ini (lihat lib/checkinQr.ts).
+    if (body.qrToken !== undefined && body.qrToken !== null && body.qrToken !== "") {
+      const qr = verifyCheckinQr(body.qrToken);
+      if (!qr.ok) {
+        req.log.warn({ event: "checkin_qr_rejected", reason: qr.reason }, "Check-in QR rejected");
+        return fail(res, 400, qr.reason === "expired" ? "QR sudah kedaluwarsa. Pindai QR yang dipasang hari ini." : "QR check-in tidak valid.");
+      }
+    } else if (config.checkinQrRequired) {
+      return fail(res, 400, "Pindai QR di pintu masuk museum untuk check-in.");
+    }
 
     const visitorName = readText(body.name);
     if (!visitorName) return fail(res, 400, "Nama pengunjung wajib diisi.");
