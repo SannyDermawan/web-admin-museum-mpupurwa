@@ -58,6 +58,13 @@ export type Visitor = {
   checkInTime: string;
 };
 
+/** QR content for today's check-in (GET /api/visitors/checkin-qr). */
+export type CheckinQrData = {
+  /** ISO date (YYYY-MM-DD) the QR is valid for */
+  date: string;
+  payload: string;
+};
+
 export type TodayVisitorsData = {
   /** ISO date (YYYY-MM-DD) the list belongs to */
   date: string;
