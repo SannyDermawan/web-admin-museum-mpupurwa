@@ -155,6 +155,20 @@ Semua respons memakai format yang sama:
 
 Endpoint yang butuh login membalas `401` bila cookie sesi tidak ada atau tidak valid.
 
+### API publik untuk aplikasi mobile (tanpa login)
+
+Dipakai aplikasi pengunjung (`mobile-mpupurwa`). Hanya baca koleksi dan kirim booking/check-in; tidak ada ubah/hapus. CORS terbuka, endpoint tulis dibatasi 60 permintaan per 15 menit per IP. Rincian dan keputusan terbuka: [SERAH-TERIMA-INTEGRASI-APP-MOBILE.md](SERAH-TERIMA-INTEGRASI-APP-MOBILE.md).
+
+| Endpoint | Keterangan |
+|---|---|
+| `GET /api/public/collections` | Semua koleksi (kolom lengkap). |
+| `GET /api/public/collections/:id` | Satu koleksi. |
+| `POST /api/public/bookings` | Ajukan booking (status `pending`). Balikan berisi `id` acak `bk-…`. |
+| `GET /api/public/bookings?ids=bk-…,bk-…` | Status booking milik pengunjung (hanya id yang dipegang). |
+| `POST /api/public/visits` | Catat check-in (satu per nama+domisili per hari). |
+
+Impor 13 arca asli: `cd backend && npx tsx prisma/import-koleksi.ts`.
+
 ## Cara login bekerja
 
 1. Frontend memanggil `POST /api/auth/login`. Backend memeriksa akun dummy lalu mengirim cookie `mpu_session` (`httpOnly`, ditandatangani).

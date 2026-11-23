@@ -10,6 +10,7 @@ import { accountsRoutes } from "./routes/accounts.routes";
 import { authRoutes } from "./routes/authRoutes";
 import bookingsRoutes from "./routes/bookings.routes";
 import { dashboardRoutes } from "./routes/dashboard.routes";
+import { publicRoutes } from "./routes/public.routes";
 import { uploadsRoutes } from "./routes/uploads.routes";
 import { visitorsRoutes } from "./routes/visitors.routes";
 import { collectionsRoutes } from "./routes/collections.routes";
@@ -17,6 +18,9 @@ import { collectionsRoutes } from "./routes/collections.routes";
 export const app = express();
 
 app.disable("x-powered-by");
+// Public API for the mobile app (collections, booking, check-in). Mounted BEFORE the CORS rule below because
+// it brings its own open CORS and JSON parser; the admin-only CORS must not answer its preflight requests.
+app.use("/api/public", express.json({ limit: "100kb" }), publicRoutes);
 // Only the frontend may call this API from a browser. `credentials` lets the login cookie travel with it.
 app.use(cors({ origin: config.frontendUrl, credentials: true }));
 app.use(express.json());
