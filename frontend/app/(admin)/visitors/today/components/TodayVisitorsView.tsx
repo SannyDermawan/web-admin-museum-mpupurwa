@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { CheckinQrCard } from "./CheckinQrCard";
 import { VISITOR_COLUMNS, VisitorsTable } from "./VisitorsTable";
 import { VisitorsToolbar } from "./VisitorsToolbar";
 import { Card } from "@/components/ui/Card";
@@ -26,26 +27,29 @@ export function TodayVisitorsView() {
   }
 
   return (
-    <Card>
-      <VisitorsToolbar
-        date={data?.date}
-        search={search}
-        onSearchChange={setSearch}
-        onDownload={handleDownload}
-        downloadDisabled={!data || data.visitors.length === 0}
-      />
-
-      {loading && !data ? (
-        <LoadingState label="Memuat pengunjung…" />
-      ) : error || !data ? (
-        <ErrorState message={error ?? "Gagal memuat pengunjung."} onRetry={reload} />
-      ) : data.visitors.length === 0 ? (
-        <EmptyState
-          message={query ? "Tidak ada pengunjung yang cocok dengan pencarian." : "Belum ada pengunjung yang check-in hari ini."}
+    <div className="flex flex-col gap-5">
+      <CheckinQrCard />
+      <Card>
+        <VisitorsToolbar
+          date={data?.date}
+          search={search}
+          onSearchChange={setSearch}
+          onDownload={handleDownload}
+          downloadDisabled={!data || data.visitors.length === 0}
         />
-      ) : (
-        <VisitorsTable visitors={data.visitors} />
-      )}
-    </Card>
+
+        {loading && !data ? (
+          <LoadingState label="Memuat pengunjung…" />
+        ) : error || !data ? (
+          <ErrorState message={error ?? "Gagal memuat pengunjung."} onRetry={reload} />
+        ) : data.visitors.length === 0 ? (
+          <EmptyState
+            message={query ? "Tidak ada pengunjung yang cocok dengan pencarian." : "Belum ada pengunjung yang check-in hari ini."}
+          />
+        ) : (
+          <VisitorsTable visitors={data.visitors} />
+        )}
+      </Card>
+    </div>
   );
 }

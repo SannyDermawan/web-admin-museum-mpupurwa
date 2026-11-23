@@ -5,8 +5,8 @@ import { requiredText } from "@/lib/validations/common";
 
 export const ERA_OPTIONS = ["Kanjuruhan", "Tumapel", "Singosari", "Majapahit", "Prasasti"] as const;
 
-export const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
-export const MAX_PDF_BYTES = 10 * 1024 * 1024;
+export const MAX_PHOTO_BYTES = 4 * 1024 * 1024; // same as the backend (Vercel request body limit is 4.5 MB)
+export const MAX_PDF_BYTES = 4 * 1024 * 1024;
 
 /** Teks boleh kosong, tetapi tidak boleh lebih panjang dari `max`. */
 const optionalText = (max: number, label: string) =>
@@ -41,10 +41,10 @@ export const collectionSchema = z.object({
   ),
   foto: fileField
     .refine((file) => !file || ["image/jpeg", "image/png"].includes(file.type), "Foto harus berformat JPG atau PNG.")
-    .refine((file) => !file || file.size <= MAX_PHOTO_BYTES, "Ukuran foto maksimal 5 MB."),
+    .refine((file) => !file || file.size <= MAX_PHOTO_BYTES, "Ukuran foto maksimal 4 MB."),
   pdfDoc: fileField
     .refine((file) => !file || file.type === "application/pdf", "Dokumen harus berformat PDF.")
-    .refine((file) => !file || file.size <= MAX_PDF_BYTES, "Ukuran dokumen maksimal 10 MB."),
+    .refine((file) => !file || file.size <= MAX_PDF_BYTES, "Ukuran dokumen maksimal 4 MB."),
 });
 
 export type CollectionFormValues = z.infer<typeof collectionSchema>;

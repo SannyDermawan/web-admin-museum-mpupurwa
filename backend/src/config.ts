@@ -22,6 +22,16 @@ export const config = {
   sessionSecret: getSessionSecret(),
   /** Vercel Blob (cloud storage) token for collection photos and PDFs. Leave it empty to switch uploads off. */
   blobToken: process.env.BLOB_READ_WRITE_TOKEN ?? "",
+  /** Key for the check-in QR signature. Empty = derived from SESSION_SECRET. */
+  checkinQrSecret: process.env.CHECKIN_QR_SECRET ?? "",
+  /** true = a check-in without a valid QR is refused. Leave false until the mobile app can scan the QR. */
+  checkinQrRequired: process.env.CHECKIN_QR_REQUIRED === "true",
+  /** Resend (email) for visitor OTP codes. Empty = OTP is only logged (development) or refused (production). */
+  resendApiKey: process.env.RESEND_API_KEY ?? "",
+  /** Sender address of OTP emails, e.g. "Museum Mpu Purwa <noreply@mpupurwa.my.id>" (the domain must be verified in Resend). */
+  mailFrom: process.env.MAIL_FROM ?? "Museum Mpu Purwa <onboarding@resend.dev>",
+  /** Development only: also return the OTP in the API response so the app can be tested without email. Never in production. */
+  otpDevEcho: !isProduction && process.env.OTP_DEV_ECHO !== "false",
 };
 
 export const isBlobConfigured = Boolean(config.blobToken);

@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { authenticate } from "../services/auth.service";
+import { maskEmail } from "../lib/logger";
 import { bodyAsRecord, isNonEmptyString, isValidEmail, readText } from "../lib/validate";
 import { fail, ok } from "../utils/response";
 import { clearSessionCookie, createSessionToken, setSessionCookie } from "../utils/session";
@@ -16,11 +17,14 @@ export async function login(req: Request, res: Response) {
 
   const result = await authenticate(email, password);
   if (!result.ok) {
+    // Security event: lets someone spot password guessing. The email is masked and the password is never logged.
+    req.log.warn({ event: "login_failed", reason: result.reason, email: maskEmail(email) }, "Login failed");
     return result.reason === "inactive"
       ? fail(res, 403, "Akun kamu dinonaktifkan. Hubungi Super Admin.")
       : fail(res, 401, "Email atau kata sandi salah.");
   }
 
+  req.log.info({ event: "login_success", userId: result.user.id, role: result.user.role }, "Login success");
   setSessionCookie(req, res, createSessionToken(result.user.id, remember), remember);
   return ok(res, { user: result.user }, { message: "Berhasil masuk." });
 }
