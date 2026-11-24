@@ -71,9 +71,18 @@ export async function uploadToBlob(kind: UploadKind, file: IncomingFile): Promis
   return { url: blob.url, pathname: blob.pathname, size: file.size, contentType: file.mimetype };
 }
 
-/** Menghapus file lama di Vercel Blob. Kegagalan hanya dicatat di log agar tidak membatalkan request utama. */
+export function isVercelBlobUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "https:" && parsed.hostname.endsWith(".public.blob.vercel-storage.com");
+  } catch {
+    return false;
+  }
+}
+
+/** Menghapus file lama di Vercel Blob. URL non-Blob (mis. Google Drive) dilewati diam-diam. */
 export async function deleteFromBlob(url: string | null | undefined): Promise<void> {
-  if (!url || !config.blobToken) return;
+  if (!url || !config.blobToken || !isVercelBlobUrl(url)) return;
   try {
     await del(url, { token: config.blobToken });
   } catch (error) {

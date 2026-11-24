@@ -11,6 +11,7 @@ import {
   listPublicBookings,
   listPublicCollections,
 } from "../controllers/public.controller";
+import { getSimilarPublicCollections } from "../controllers/publicSimilar.controller";
 import { login, me, register, verifyOtp } from "../controllers/visitorAuth.controller";
 import { visitorAuthLimiter, visitorVerifyLimiter } from "../middleware/rateLimiter";
 import { optionalVisitor, requireVisitor } from "../middleware/requireVisitor";
@@ -32,6 +33,7 @@ const writeLimiter = rateLimit({
 
 publicRoutes.get("/collections", listPublicCollections);
 publicRoutes.get("/collections/:id", getPublicCollection);
+publicRoutes.get("/collections/:id/similar", getSimilarPublicCollections);
 publicRoutes.post("/bookings", writeLimiter, createPublicBooking);
 publicRoutes.get("/bookings", listPublicBookings);
 publicRoutes.post("/visits", writeLimiter, optionalVisitor, createPublicVisit);
