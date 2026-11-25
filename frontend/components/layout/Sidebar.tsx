@@ -96,7 +96,7 @@ export function Sidebar({ user, open, onClose }: SidebarProps) {
         <div className="mt-3.5 flex items-center gap-2.5 border-t border-white/10 p-3">
           <Avatar name={user.name} variant="gold" />
           <div className="min-w-0 flex-1">
-            <div className="truncate text-[13px] font-bold text-white">{user.name}</div>
+            <div className="line-clamp-2 break-words text-[13px] leading-tight font-bold text-white" title={user.name}>{user.name}</div>
             <div className="text-[11px] text-white/50">{ROLE_LABEL[user.role]}</div>
           </div>
           <button

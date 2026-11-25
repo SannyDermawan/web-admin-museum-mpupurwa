@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { Select } from "@/components/ui/Select";
+import { noDigits } from "@/lib/forms";
 import { apiPatch } from "@/lib/api";
 import { EDUCATION_LEVELS } from "@/lib/accounts";
 import { editVisitorSchema, type EditVisitorFormValues } from "@/lib/validations/accounts";
@@ -81,7 +82,7 @@ export function EditVisitorModal({ account, onClose, onSaved }: Props) {
           label="Nama Lengkap"
           error={errors.name?.message}
           autoFocus
-          {...register("name")}
+          {...noDigits(register("name"))}
         />
         <Input id={`${formId}-domicile`} label="Domisili" error={errors.domicile?.message} {...register("domicile")} />
         <Input

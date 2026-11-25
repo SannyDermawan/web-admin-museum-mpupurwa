@@ -2,8 +2,8 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
-import type { ChangeEvent } from "react";
 import { useForm, useWatch } from "react-hook-form";
+import { FileField } from "./FileField";
 import type { CollectionFormData } from "./types";
 import { uploadFile } from "@/lib/upload";
 import { collectionSchema, ERA_OPTIONS } from "@/lib/validations/collections";
@@ -28,6 +28,9 @@ const EMPTY_VALUES: CollectionFormValues = {
   videoUrl: "",
   foto: null,
   pdfDoc: null,
+  pdfLink: "",
+  hapusFoto: false,
+  hapusPdf: false,
 };
 
 const inputClass = (error?: string) =>
@@ -71,34 +74,20 @@ export default function CollectionFormModal({ isOpen, onClose, onSave, initialDa
 
   const foto = useWatch({ control, name: "foto" });
   const pdfDoc = useWatch({ control, name: "pdfDoc" });
+  const hapusFoto = useWatch({ control, name: "hapusFoto" });
+  const hapusPdf = useWatch({ control, name: "hapusPdf" });
+  const pdfLink = useWatch({ control, name: "pdfLink" });
 
   if (!isOpen) return null;
 
-  const isDrivePdf = Boolean(
-    initialData?.pdfUrl &&
-      /^https:\/\/(drive|docs)\.google\.com\//i.test(initialData.pdfUrl),
-  );
-
-  const fotoName = foto?.name ?? (initialData?.fotoUrl ? "Foto sudah tersimpan." : "Belum ada foto. Format JPG atau PNG.");
-  const pdfName =
-    pdfDoc?.name ??
-    (initialData?.pdfUrl
-      ? isDrivePdf
-        ? "Dokumen Google Drive sudah terhubung (unggah PDF baru jika ingin mengganti)."
-        : "Dokumen sudah tersimpan."
-      : "Belum ada dokumen.");
-
-  const handleFileChange = (field: "foto" | "pdfDoc") => (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) setValue(field, file, { shouldValidate: true, shouldDirty: true });
-  };
-
   async function onSubmit(values: CollectionFormValues) {
     try {
-      // Only a newly chosen file is uploaded; otherwise the link that was already saved is kept.
+      // Only a newly chosen file is uploaded; otherwise the saved link is kept, unless it was marked to be removed.
       const [fotoUrl, pdfUrl] = await Promise.all([
-        values.foto ? uploadFile(values.foto, "foto") : Promise.resolve(initialData?.fotoUrl ?? null),
-        values.pdfDoc ? uploadFile(values.pdfDoc, "dokumen") : Promise.resolve(initialData?.pdfUrl ?? null),
+        values.foto ? uploadFile(values.foto, "foto") : Promise.resolve(values.hapusFoto ? null : (initialData?.fotoUrl ?? null)),
+        values.pdfDoc
+          ? uploadFile(values.pdfDoc, "dokumen")
+          : Promise.resolve(values.pdfLink || (values.hapusPdf ? null : (initialData?.pdfUrl ?? null))),
       ]);
 
       await onSave({
@@ -243,31 +232,20 @@ export default function CollectionFormModal({ isOpen, onClose, onSave, initialDa
             </div>
 
             {/* Foto Koleksi */}
-            <div className="mb-3.5">
-              <label className="text-[12px] font-bold mb-1.5 block text-[#241A0F]">Foto koleksi</label>
-              <label
-                className={`flex items-center gap-3 border border-dashed rounded-lg p-3 bg-[#F7F5F0] cursor-pointer hover:border-[#D4AF37] ${
-                  errors.foto ? "border-[#B3261E]" : "border-[#CFC9BA]"
-                }`}
-              >
-                <svg className="w-5 h-5 stroke-[#7A7368] fill-none stroke-[1.6] flex-shrink-0" viewBox="0 0 24 24">
-                  <rect x="3" y="5" width="18" height="14" rx="2" />
-                  <circle cx="9" cy="11" r="2" />
-                  <path d="M21 16l-5-5-8 8" />
-                </svg>
-                <div>
-                  <div className="text-[13px] font-bold">Pilih foto</div>
-                  <div className="text-[12px] text-[#7A7368] mt-0.5 break-all">{fotoName}</div>
-                </div>
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png"
-                  onChange={handleFileChange("foto")}
-                  className="hidden"
-                />
-              </label>
-              <FieldError message={errors.foto?.message} />
-            </div>
+            <FileField
+              label="Foto koleksi"
+              kind="foto"
+              accept="image/jpeg,image/png"
+              pickLabel="Pilih foto"
+              hint="Belum ada foto. Format JPG atau PNG, maksimal 4 MB."
+              file={foto}
+              savedUrl={initialData?.fotoUrl ?? null}
+              removed={hapusFoto}
+              error={errors.foto?.message}
+              onPick={(file) => setValue("foto", file, { shouldValidate: true, shouldDirty: true })}
+              onClearPick={() => setValue("foto", null, { shouldValidate: true })}
+              onRemovedChange={(removed) => setValue("hapusFoto", removed, { shouldDirty: true })}
+            />
 
             {/* Link YouTube */}
             <div className="mb-3.5">
@@ -285,29 +263,39 @@ export default function CollectionFormModal({ isOpen, onClose, onSave, initialDa
             </div>
 
             {/* PDF Dokumen */}
-            <div className="mb-0">
-              <label className="text-[12px] font-bold mb-1.5 block text-[#241A0F]">Dokumen informasi (PDF)</label>
-              <label
-                className={`flex items-center gap-3 border border-dashed rounded-lg p-3 bg-[#F7F5F0] cursor-pointer hover:border-[#D4AF37] ${
-                  errors.pdfDoc ? "border-[#B3261E]" : "border-[#CFC9BA]"
-                }`}
-              >
-                <svg className="w-5 h-5 stroke-[#7A7368] fill-none stroke-[1.6] flex-shrink-0" viewBox="0 0 24 24">
-                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-                  <path d="M14 2v6h6" />
-                </svg>
-                <div>
-                  <div className="text-[13px] font-bold">Pilih file PDF</div>
-                  <div className="text-[12px] text-[#7A7368] mt-0.5 break-all">{pdfName}</div>
-                </div>
-                <input
-                  type="file"
-                  accept="application/pdf"
-                  onChange={handleFileChange("pdfDoc")}
-                  className="hidden"
-                />
+            <FileField
+              label="Dokumen informasi (PDF)"
+              kind="dokumen"
+              accept="application/pdf"
+              pickLabel="Pilih file PDF"
+              hint="Belum ada dokumen. Format PDF, maksimal 4 MB."
+              file={pdfDoc}
+              savedUrl={initialData?.pdfUrl ?? null}
+              removed={hapusPdf}
+              error={errors.pdfDoc?.message}
+              onPick={(file) => setValue("pdfDoc", file, { shouldValidate: true, shouldDirty: true })}
+              onClearPick={() => setValue("pdfDoc", null, { shouldValidate: true })}
+              onRemovedChange={(removed) => setValue("hapusPdf", removed, { shouldDirty: true })}
+            />
+
+            {/* Pilihan lain: link PDF yang sudah ada di Google Drive */}
+            <div>
+              <label htmlFor="pdf-link" className="text-[12px] font-bold mb-1.5 block text-[#241A0F]">
+                Atau tempel link Google Drive
               </label>
-              <FieldError message={errors.pdfDoc?.message} />
+              <input
+                id="pdf-link"
+                type="url"
+                placeholder="https://drive.google.com/file/d/.../view"
+                className={inputClass(errors.pdfLink?.message)}
+                {...register("pdfLink")}
+              />
+              <FieldError message={errors.pdfLink?.message} />
+              <div className="text-[12px] text-[#7A7368] mt-1 leading-snug">
+                {pdfLink && initialData?.pdfUrl
+                  ? "Link ini akan menggantikan dokumen yang tersimpan."
+                  : "Isi hanya jika PDF-nya sudah ada di Google Drive. Pastikan aksesnya \"Siapa saja yang memiliki link\"."}
+              </div>
             </div>
           </div>
 

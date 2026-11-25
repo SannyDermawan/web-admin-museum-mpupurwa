@@ -23,7 +23,7 @@ export interface CollectionDetail extends CollectionItem {
 }
 
 /** Data dari CollectionFormModal saat tombol Simpan diklik */
-export type CollectionFormData = Omit<CollectionFormValues, "foto" | "pdfDoc"> & {
+export type CollectionFormData = Omit<CollectionFormValues, "foto" | "pdfDoc" | "pdfLink" | "hapusFoto" | "hapusPdf"> & {
   fotoUrl: string | null;
   pdfUrl: string | null;
 };

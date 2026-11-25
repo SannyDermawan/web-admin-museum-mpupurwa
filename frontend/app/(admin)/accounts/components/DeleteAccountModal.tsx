@@ -12,6 +12,8 @@ type Props = {
   accountName: string;
   /** What else disappears with the account, e.g. "beserta seluruh riwayat kunjungannya" */
   consequence?: string;
+  /** Extra sentence under the warning, e.g. what is kept */
+  note?: string;
   /** API path of the account, e.g. "/api/accounts/visitors/ACC-001" */
   path: string;
   onClose: () => void;
@@ -20,7 +22,7 @@ type Props = {
 };
 
 /** Popup "Hapus akun ini?". Mount it only while an account is waiting for confirmation. */
-export function DeleteAccountModal({ accountName, consequence, path, onClose, onDeleted }: Props) {
+export function DeleteAccountModal({ accountName, consequence, note, path, onClose, onDeleted }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -61,6 +63,7 @@ export function DeleteAccountModal({ accountName, consequence, path, onClose, on
         Akun <b className="text-ink">{accountName}</b>
         {consequence ? ` ${consequence}` : ""} akan dihapus permanen. Tindakan ini tidak bisa dibatalkan.
       </p>
+      {note && <p className="mt-2 text-[13px] leading-normal text-ink-soft">{note}</p>}
       <div className="mt-4 text-left">
         <FormAlert message={error} />
       </div>

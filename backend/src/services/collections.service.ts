@@ -1,4 +1,11 @@
-import { prisma } from "../lib/prisma";
+import {
+  findCollectionDetail,
+  findCollectionFiles,
+  insertCollection,
+  listCollectionRows,
+  removeCollection,
+  updateCollectionRow,
+} from "../models/collectionModel";
 import type {
   CollectionDetail,
   CollectionListItem,
@@ -16,42 +23,9 @@ function computeStatusMedia(videoUrl: string | null, pdfUrl: string | null): Col
   return "Belum ada video dan PDF";
 }
 
-const COLLECTION_DETAIL_SELECT = {
-  id: true,
-  name: true,
-  era: true,
-  period: true,
-  origin: true,
-  material: true,
-  dimensions: true,
-  meaning: true,
-  photoUrl: true,
-  videoUrl: true,
-  pdfUrl: true,
-} as const;
-
 export async function listCollections(query?: string): Promise<CollectionListItem[]> {
   const q = query?.trim();
-  const rows = await prisma.collection.findMany({
-    where: q
-      ? {
-          OR: [
-            { name: { contains: q } },
-            { era: { contains: q } },
-            { material: { contains: q } },
-          ],
-        }
-      : undefined,
-    select: {
-      id: true,
-      name: true,
-      era: true,
-      material: true,
-      videoUrl: true,
-      pdfUrl: true,
-    },
-    orderBy: { id: "desc" },
-  });
+  const rows = await listCollectionRows(q);
 
   return rows.map((row) => ({
     id: row.id,
@@ -63,10 +37,7 @@ export async function listCollections(query?: string): Promise<CollectionListIte
 }
 
 export async function getCollectionById(id: number): Promise<CollectionDetail | null> {
-  const row = await prisma.collection.findUnique({
-    where: { id },
-    select: COLLECTION_DETAIL_SELECT,
-  });
+  const row = await findCollectionDetail(id);
   if (!row) return null;
 
   return {
@@ -76,10 +47,7 @@ export async function getCollectionById(id: number): Promise<CollectionDetail | 
 }
 
 export async function createCollection(input: CollectionWriteInput): Promise<CollectionDetail> {
-  const created = await prisma.collection.create({
-    data: input,
-    select: COLLECTION_DETAIL_SELECT,
-  });
+  const created = await insertCollection(input);
 
   return {
     ...created,
@@ -88,17 +56,10 @@ export async function createCollection(input: CollectionWriteInput): Promise<Col
 }
 
 export async function updateCollection(id: number, input: CollectionWriteInput): Promise<CollectionDetail | null> {
-  const existing = await prisma.collection.findUnique({
-    where: { id },
-    select: { photoUrl: true, pdfUrl: true },
-  });
+  const existing = await findCollectionFiles(id);
   if (!existing) return null;
 
-  const updated = await prisma.collection.update({
-    where: { id },
-    data: input,
-    select: COLLECTION_DETAIL_SELECT,
-  });
+  const updated = await updateCollectionRow(id, input);
 
   // Hapus file lama dari Vercel Blob jika diganti atau dikosongkan
   if (existing.photoUrl && existing.photoUrl !== updated.photoUrl) {
@@ -115,13 +76,10 @@ export async function updateCollection(id: number, input: CollectionWriteInput):
 }
 
 export async function deleteCollection(id: number): Promise<boolean> {
-  const existing = await prisma.collection.findUnique({
-    where: { id },
-    select: { photoUrl: true, pdfUrl: true },
-  });
+  const existing = await findCollectionFiles(id);
   if (!existing) return false;
 
-  await prisma.collection.delete({ where: { id } });
+  await removeCollection(id);
 
   await Promise.all([
     deleteFromBlob(existing.photoUrl),

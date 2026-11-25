@@ -1,5 +1,5 @@
 import type { BookingStatus } from "@prisma/client";
-import { prisma } from "../lib/prisma";
+import { listAllBookings, updateBookingStatus } from "../models/bookingModel";
 
 export const BOOKING_STATUSES = ["pending", "confirmed", "completed", "rejected"] as const;
 
@@ -11,19 +11,6 @@ function formatVisitDate(date: Date): string {
   const year = date.getUTCFullYear();
   return `${day} ${month} ${year}`;
 }
-
-const BOOKING_SELECT = {
-  id: true,
-  institution: true,
-  contactName: true,
-  email: true,
-  phone: true,
-  visitDate: true,
-  participantCount: true,
-  purpose: true,
-  notes: true,
-  status: true,
-} as const;
 
 type BookingRow = {
   id: string;
@@ -54,18 +41,9 @@ function mapBooking(row: BookingRow) {
 }
 
 export async function listBookings() {
-  const rows = await prisma.booking.findMany({
-    select: BOOKING_SELECT,
-    orderBy: { createdAt: "desc" },
-  });
-  return rows.map(mapBooking);
+  return (await listAllBookings()).map(mapBooking);
 }
 
 export async function changeBookingStatus(id: string, status: BookingStatus) {
-  const updated = await prisma.booking.update({
-    where: { id },
-    data: { status },
-    select: BOOKING_SELECT,
-  });
-  return mapBooking(updated);
+  return mapBooking(await updateBookingStatus(id, status));
 }

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { Select } from "@/components/ui/Select";
+import { noDigits } from "@/lib/forms";
 import { apiPost } from "@/lib/api";
 import { ROLE_LABEL } from "@/lib/accounts";
 import { addAdminSchema, type AddAdminFormValues } from "@/lib/validations/accounts";
@@ -102,7 +103,7 @@ export function AddAdminModal({ onClose, onCreated }: Props) {
           placeholder="Nama admin"
           error={errors.name?.message}
           autoFocus
-          {...register("name")}
+          {...noDigits(register("name"))}
         />
         <Input
           id={`${formId}-email`}

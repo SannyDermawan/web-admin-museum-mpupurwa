@@ -2,7 +2,7 @@
 // No database queries and no business rules here: those live in services/accounts.service.ts.
 
 import type { Request, Response } from "express";
-import { isOneOf, isValidEmail, readText, bodyAsRecord } from "../lib/validate";
+import { isOneOf, isValidEmail, readText, bodyAsRecord, PERSON_NAME_RULE, isPersonName } from "../lib/validate";
 import { validatePassword } from "../lib/validatePassword";
 import {
   AccountError,
@@ -53,6 +53,7 @@ function handleError(res: Response, error: unknown) {
 /** Message for an invalid name, or null. */
 function checkName(name: string): string | null {
   if (!name) return "Nama lengkap wajib diisi.";
+  if (!isPersonName(name)) return `Nama lengkap ${PERSON_NAME_RULE}`;
   if (name.length > MAX_NAME_LENGTH) return `Nama lengkap maksimal ${MAX_NAME_LENGTH} karakter.`;
   return null;
 }

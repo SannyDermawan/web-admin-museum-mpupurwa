@@ -6,7 +6,7 @@
 //   GET  /api/public/auth/me           (Authorization: Bearer <token>)                                 -> { account }
 
 import type { NextFunction, Request, Response } from "express";
-import { bodyAsRecord, isOneOf, isValidEmail, readText } from "../lib/validate";
+import { PERSON_NAME_RULE, bodyAsRecord, isOneOf, isPersonName, isValidEmail, readText } from "../lib/validate";
 import {
   OTP_RESEND_SECONDS,
   OTP_TTL_SECONDS,
@@ -49,6 +49,7 @@ export async function register(req: Request, res: Response, next: NextFunction) 
 
     const name = readText(body.name);
     if (!name) return fail(res, 400, "Nama wajib diisi.");
+    if (!isPersonName(name)) return fail(res, 400, `Nama ${PERSON_NAME_RULE}`);
     if (name.length > 100) return fail(res, 400, "Nama maksimal 100 karakter.");
 
     const email = readEmail(body.email);

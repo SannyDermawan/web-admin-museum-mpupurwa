@@ -41,7 +41,7 @@ async function main() {
   // ---------- admins (kata sandi ketiganya: admin123) ----------
   await prisma.admin.createMany({
     data: [
-      { id: "ADM-001", name: "Rizal Pradana", email: "admin@mpupurwa.test", passwordHash, role: "super_admin", status: "active", lastLoginAt: new Date() },
+      { id: "ADM-001", name: "Sanny Dermawan", email: "admin@mpupurwa.test", passwordHash, role: "super_admin", status: "active", lastLoginAt: new Date() },
       { id: "ADM-002", name: "Dewi Anggraini", email: "dewi@mpupurwa.id", passwordHash, role: "admin", status: "active", lastLoginAt: new Date(Date.now() - DAY_MS) },
       { id: "ADM-003", name: "Hadi Kurniawan", email: "hadi@mpupurwa.id", passwordHash, role: "admin", status: "inactive", lastLoginAt: new Date(Date.now() - 30 * DAY_MS) },
     ],
@@ -163,11 +163,11 @@ await prisma.booking.createMany({
   // ---------- collections (alamat video dan PDF di bawah hanya PENGISI contoh) ----------
   await prisma.collection.createMany({
     data: [
-      { name: "Arca Ganesya Tikus", era: "Singosari", material: "Batu andesit", origin: "Malang Raya", period: "Abad 13", videoUrl: "https://youtu.be/example-ganesya", pdfUrl: "https://example.com/pdf/arca-ganesya-tikus.pdf" },
-      { name: "Arca Brahma", era: "Kanjuruhan", material: "Batu andesit", videoUrl: "https://youtu.be/example-brahma", pdfUrl: "https://example.com/pdf/arca-brahma.pdf" },
-      { name: "Siwa Catur Muka", era: "Tumapel", material: "Batu andesit", pdfUrl: "https://example.com/pdf/siwa-catur-muka.pdf" },
-      { name: "Makara Gapura", era: "Singosari", material: "Batu andesit", videoUrl: "https://youtu.be/example-makara", pdfUrl: "https://example.com/pdf/makara-gapura.pdf" },
-      { name: "Prasasti Kanjuruhan", era: "Prasasti", material: "Batu andesit", videoUrl: "https://youtu.be/example-prasasti" },
+      { name: "Arca Ganesya Tikus", era: "Singosari", material: "Batu andesit", origin: "Malang Raya", period: "Abad 13", videoUrl: "https://youtu.be/contoh00001", pdfUrl: "https://drive.google.com/file/d/contoh-arca-ganesya-tikus/view" },
+      { name: "Arca Brahma", era: "Kanjuruhan", material: "Batu andesit", videoUrl: "https://youtu.be/contoh00002", pdfUrl: "https://drive.google.com/file/d/contoh-arca-brahma/view" },
+      { name: "Siwa Catur Muka", era: "Tumapel", material: "Batu andesit", pdfUrl: "https://drive.google.com/file/d/contoh-siwa-catur-muka/view" },
+      { name: "Makara Gapura", era: "Singosari", material: "Batu andesit", videoUrl: "https://youtu.be/contoh00003", pdfUrl: "https://drive.google.com/file/d/contoh-makara-gapura/view" },
+      { name: "Prasasti Kanjuruhan", era: "Prasasti", material: "Batu andesit", videoUrl: "https://youtu.be/contoh00004" },
       { name: "Arca Nandi", era: "Tumapel", material: "Batu andesit" },
     ],
   });

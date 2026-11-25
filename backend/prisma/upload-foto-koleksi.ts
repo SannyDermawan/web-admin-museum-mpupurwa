@@ -12,7 +12,9 @@
 //    - Prioritas 1: sama persis setelah normalisasi (mis. `arca_brahma.jpg` -> `Arca Brahma`).
 //    - Prioritas 2: nama file tanpa awalan `arca_` sama persis dengan nama koleksi (mis. `arca_siwa_catur_muka.jpg` -> `Siwa Catur Muka`).
 //    - Prioritas 3: seluruh token kata nama file (tanpa awalan `arca_`) terkandung di dalam tepat satu koleksi.
-// 4. Aman diulang: koleksi yang `photoUrl`-nya sudah terisi akan dilewati.
+// 4. Pengecualian (ejaan file berbeda dari nama di database) ada di ALIASES, mengikuti
+//    `assets/data/koleksi.json` milik aplikasi mobile.
+// 5. Aman diulang: koleksi yang `photoUrl`-nya sudah terisi akan dilewati, dan satu arca hanya diisi sekali per jalan.
 
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { extname, join, resolve } from "node:path";
@@ -55,8 +57,22 @@ function safeFileName(name: string): string {
   return `${base || "file"}${extension ? `.${extension}` : ""}`;
 }
 
+// Nama file (tanpa ekstensi) -> nama arca, untuk file yang tidak bisa dicocokkan otomatis.
+const ALIASES: Record<string, string> = {
+  arca_avalokitesvara: "Arca Bodhisatwa Avalokitecvara",
+  arca_ganesha_1: "Arca Ganesha",
+  arca_ganesha_2: "Arca Ganesha II",
+};
+
 function matchCollection<T extends { id: number; name: string }>(fileName: string, collections: T[]): T | null {
   const baseName = fileName.slice(0, fileName.length - extname(fileName).length);
+
+  const alias = ALIASES[baseName.toLowerCase()];
+  if (alias) {
+    const key = normalizeTokens(alias).join(" ");
+    return collections.find((c) => normalizeTokens(c.name).join(" ") === key) ?? null;
+  }
+
   const fileTokens = normalizeTokens(baseName);
   if (fileTokens.length === 0) return null;
 
@@ -142,6 +158,7 @@ async function main() {
     }
 
     if (isDryRun) {
+      matched.photoUrl = "(direncanakan)";
       console.log(`[RENCANA] ${file} (${(buffer.length / 1024).toFixed(1)} KB) -> #${matched.id} "${matched.name}"`);
       diunggah++;
       continue;
@@ -159,6 +176,7 @@ async function main() {
       data: { photoUrl: blob.url },
     });
 
+    matched.photoUrl = blob.url;
     console.log(`[OK] ${file} -> #${matched.id} "${matched.name}" (${blob.url})`);
     diunggah++;
   }

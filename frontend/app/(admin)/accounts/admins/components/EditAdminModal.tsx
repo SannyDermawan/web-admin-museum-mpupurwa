@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { Select } from "@/components/ui/Select";
+import { noDigits } from "@/lib/forms";
 import { apiPatch } from "@/lib/api";
 import { ROLE_LABEL, STATUS_LABEL } from "@/lib/accounts";
 import { editAdminSchema, type EditAdminFormValues } from "@/lib/validations/accounts";
@@ -69,7 +70,7 @@ export function EditAdminModal({ account, onClose, onSaved }: Props) {
           label="Nama Lengkap"
           error={errors.name?.message}
           autoFocus
-          {...register("name")}
+          {...noDigits(register("name"))}
         />
         <Input id={`${formId}-email`} label="Email" value={account.email} readOnly className="bg-offwhite text-ink-soft" />
         <Select id={`${formId}-role`} label="Peran" error={errors.role?.message} {...register("role")}>

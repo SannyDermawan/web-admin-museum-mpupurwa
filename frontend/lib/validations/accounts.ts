@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { emailSchema, passwordSchema, requiredText } from "@/lib/validations/common";
+import { PERSON_NAME_MESSAGE, PERSON_NAME_PATTERN, emailSchema, passwordSchema, requiredText } from "@/lib/validations/common";
 
 // Aturan meniru backend (accounts.controller.ts): jangan lebih longgar atau lebih ketat.
 // Batas panjang mengikuti ukuran kolom di prisma/schema.prisma.
@@ -9,10 +9,9 @@ const MAX_DOMICILE_LENGTH = 80;
 const MAX_INSTITUTION_LENGTH = 150;
 const MAX_PASSWORD_LENGTH = 72; // bcrypt hanya memakai 72 karakter pertama
 
-const nameSchema = requiredText("Nama lengkap wajib diisi.").max(
-  MAX_NAME_LENGTH,
-  `Nama lengkap maksimal ${MAX_NAME_LENGTH} karakter.`,
-);
+const nameSchema = requiredText("Nama lengkap wajib diisi.")
+  .max(MAX_NAME_LENGTH, `Nama lengkap maksimal ${MAX_NAME_LENGTH} karakter.`)
+  .regex(PERSON_NAME_PATTERN, PERSON_NAME_MESSAGE);
 
 const roleSchema = z.enum(["admin", "super_admin"], { error: "Peran tidak valid." });
 

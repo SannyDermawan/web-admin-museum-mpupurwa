@@ -17,6 +17,8 @@ export type VisitorAccount = {
   educationLevel: EducationLevel;
   /** ISO date (YYYY-MM-DD) the account was registered */
   registeredAt: string;
+  /** true once the visitor has entered the OTP code sent to their email (in the mobile app) */
+  verified: boolean;
 };
 
 export type VisitorAccountsData = {

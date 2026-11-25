@@ -1,10 +1,20 @@
-// Business logic and database queries of the account management module (Manajemen Akun).
+// Business logic of the account management module (Manajemen Akun). The queries are in models/.
 // Controllers only read the request and send the response; the rules live here.
 // passwordHash is never selected for the lists and never returned: see toAdminAccount().
 
 import { Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
-import { prisma } from "../lib/prisma";
+import {
+  countOtherActiveSuperAdmins,
+  findAdminRecord,
+  insertAdmin,
+  listAdminIds,
+  listAdmins,
+  removeAdmin,
+  updateAdmin,
+  type AdminRecord,
+} from "../models/adminModel";
+import { listVisitors, removeVisitor, updateVisitor, type VisitorListRecord } from "../models/visitorAccountModel";
 import type {
   AdminAccount,
   AdminStatus,
@@ -48,22 +58,29 @@ function notFoundOr(error: unknown, message: string): never {
 
 const VISITOR_NOT_FOUND = "Akun pengunjung tidak ditemukan.";
 
-// Only the columns the API sends: no created_at / updated_at.
-const visitorSelect = {
-  id: true,
-  name: true,
-  phone: true,
-  email: true,
-  domicile: true,
-  institution: true,
-  educationLevel: true,
-  registeredAt: true,
-} satisfies Prisma.VisitorAccountSelect;
+/**
+ * Menyamarkan nomor HP sebelum dikirim ke panel admin: "081234567890" -> "0812-xxxx-7890".
+ * Database tetap menyimpan nomor utuh (pencarian memakai nilai asli). Nomor yang sudah tersamar tidak diubah.
+ */
+export function maskPhone(phone: string): string {
+  if (/x/i.test(phone)) return phone;
+  let digits = phone.replace(/\D/g, "");
+  // "+62 812..." ditulis seperti nomor lokal "0812...".
+  if (phone.trim().startsWith("+62")) digits = `0${digits.slice(2)}`;
+  if (digits.length < 8) return "xxxx";
+  // Nomor pendek menampilkan lebih sedikit angka di belakang, supaya tetap ada bagian yang tersembunyi.
+  const tail = digits.length >= 11 ? 4 : 2;
+  return `${digits.slice(0, 4)}-xxxx-${digits.slice(-tail)}`;
+}
 
-type VisitorRow = Prisma.VisitorAccountGetPayload<{ select: typeof visitorSelect }>;
-
-function toVisitorAccount(row: VisitorRow): VisitorAccount {
-  return { ...row, registeredAt: toIsoDate(row.registeredAt) };
+function toVisitorAccount({ emailVerifiedAt, ...row }: VisitorListRecord): VisitorAccount {
+  return {
+    ...row,
+    phone: maskPhone(row.phone),
+    registeredAt: toIsoDate(row.registeredAt),
+    // Hanya ya/tidak yang dikirim, bukan waktu verifikasinya.
+    verified: emailVerifiedAt !== null,
+  };
 }
 
 /** Optional `query` matches name, phone, email, domicile, institution or education level. */
@@ -81,18 +98,12 @@ export async function listVisitorAccounts(query?: string): Promise<VisitorAccoun
       ]
     : [];
 
-  const rows = await prisma.visitorAccount.findMany({
-    where: search.length > 0 ? { OR: search } : undefined,
-    select: visitorSelect,
-    orderBy: { id: "asc" },
-  });
-  return rows.map(toVisitorAccount);
+  return (await listVisitors(search)).map(toVisitorAccount);
 }
 
 export async function updateVisitorAccount(id: string, input: UpdateVisitorAccountRequest): Promise<VisitorAccount> {
   try {
-    const row = await prisma.visitorAccount.update({ where: { id }, data: input, select: visitorSelect });
-    return toVisitorAccount(row);
+    return toVisitorAccount(await updateVisitor(id, input));
   } catch (error) {
     return notFoundOr(error, VISITOR_NOT_FOUND);
   }
@@ -101,7 +112,7 @@ export async function updateVisitorAccount(id: string, input: UpdateVisitorAccou
 /** Check-ins of this visitor stay: visits.visitor_account_id is ON DELETE SET NULL, and visits hold their own copy of the name. */
 export async function deleteVisitorAccount(id: string): Promise<void> {
   try {
-    await prisma.visitorAccount.delete({ where: { id } });
+    await removeVisitor(id);
   } catch (error) {
     notFoundOr(error, VISITOR_NOT_FOUND);
   }
@@ -111,19 +122,7 @@ export async function deleteVisitorAccount(id: string): Promise<void> {
 
 const ADMIN_NOT_FOUND = "Akun admin tidak ditemukan.";
 
-// passwordHash is deliberately not in this list.
-const adminSelect = {
-  id: true,
-  name: true,
-  email: true,
-  role: true,
-  status: true,
-  lastLoginAt: true,
-} satisfies Prisma.AdminSelect;
-
-type AdminRow = Prisma.AdminGetPayload<{ select: typeof adminSelect }>;
-
-function toAdminAccount(row: AdminRow): AdminAccount {
+function toAdminAccount(row: AdminRecord): AdminAccount {
   return { ...row, lastLoginAt: row.lastLoginAt ? row.lastLoginAt.toISOString() : null };
 }
 
@@ -139,17 +138,12 @@ export async function listAdminAccounts(query?: string): Promise<AdminAccount[]>
       ]
     : [];
 
-  const rows = await prisma.admin.findMany({
-    where: search.length > 0 ? { OR: search } : undefined,
-    select: adminSelect,
-    orderBy: { id: "asc" },
-  });
-  return rows.map(toAdminAccount);
+  return (await listAdmins(search)).map(toAdminAccount);
 }
 
 /** "ADM-004" for the next admin: the highest number in use plus one (numbers of deleted admins are not reused while a higher one exists). */
 async function nextAdminId(): Promise<string> {
-  const rows = await prisma.admin.findMany({ select: { id: true } });
+  const rows = await listAdminIds();
   const highest = rows.reduce((max, { id }) => {
     const number = id.startsWith(ADMIN_ID_PREFIX) ? Number.parseInt(id.slice(ADMIN_ID_PREFIX.length), 10) : 0;
     return Number.isFinite(number) ? Math.max(max, number) : max;
@@ -174,10 +168,7 @@ export async function createAdminAccount(input: CreateAdminRequest): Promise<Adm
   // Two admins created at the same moment can pick the same id: the second one fails with P2002 on the id and tries again.
   for (let attempt = 1; ; attempt++) {
     try {
-      const row = await prisma.admin.create({
-        data: { id: await nextAdminId(), name: input.name, email, passwordHash, role: input.role, status: "active" },
-        select: adminSelect,
-      });
+      const row = await insertAdmin({ id: await nextAdminId(), name: input.name, email, passwordHash, role: input.role, status: "active" });
       return toAdminAccount(row);
     } catch (error) {
       if (isEmailConflict(error)) throw new AccountError(409, "Email sudah terdaftar.");
@@ -190,13 +181,13 @@ export async function createAdminAccount(input: CreateAdminRequest): Promise<Adm
 /** True when `id` is an active super admin and no other active super admin exists. */
 async function isLastActiveSuperAdmin(target: { id: string; role: UserRole; status: AdminStatus }): Promise<boolean> {
   if (target.role !== "super_admin" || target.status !== "active") return false;
-  const others = await prisma.admin.count({ where: { role: "super_admin", status: "active", id: { not: target.id } } });
+  const others = await countOtherActiveSuperAdmins(target.id);
   return others === 0;
 }
 
 /** `actorId` is the logged-in admin: nobody may change their own role or status. */
 export async function updateAdminAccount(actorId: string, id: string, input: UpdateAdminRequest): Promise<AdminAccount> {
-  const current = await prisma.admin.findUnique({ where: { id }, select: adminSelect });
+  const current = await findAdminRecord(id);
   if (!current) throw new AccountError(404, ADMIN_NOT_FOUND);
 
   if (actorId === current.id && (input.role !== current.role || input.status !== current.status)) {
@@ -208,8 +199,7 @@ export async function updateAdminAccount(actorId: string, id: string, input: Upd
   }
 
   try {
-    const row = await prisma.admin.update({ where: { id }, data: input, select: adminSelect });
-    return toAdminAccount(row);
+    return toAdminAccount(await updateAdmin(id, input));
   } catch (error) {
     return notFoundOr(error, ADMIN_NOT_FOUND);
   }
@@ -218,14 +208,14 @@ export async function updateAdminAccount(actorId: string, id: string, input: Upd
 export async function deleteAdminAccount(actorId: string, id: string): Promise<void> {
   if (actorId === id) throw new AccountError(400, "Akun yang sedang kamu pakai tidak dapat dihapus.");
 
-  const current = await prisma.admin.findUnique({ where: { id }, select: adminSelect });
+  const current = await findAdminRecord(id);
   if (!current) throw new AccountError(404, ADMIN_NOT_FOUND);
   if (await isLastActiveSuperAdmin(current)) {
     throw new AccountError(400, "Super Admin terakhir tidak dapat dihapus.");
   }
 
   try {
-    await prisma.admin.delete({ where: { id } });
+    await removeAdmin(id);
   } catch (error) {
     notFoundOr(error, ADMIN_NOT_FOUND);
   }

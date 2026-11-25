@@ -1,7 +1,9 @@
 // Numbers and charts of the dashboard, all counted from the database in a few queries.
 
-import type { Prisma } from "@prisma/client";
-import { prisma } from "../lib/prisma";
+import { groupBookingsByStatusSince, listPendingBookings, type BookingRecord } from "../models/bookingModel";
+import { countCollections } from "../models/collectionModel";
+import { countVisitors, countVisitorsRegisteredSince } from "../models/visitorAccountModel";
+import { countVisitsOn, findLatestVisitDate, groupVisitsByDate, listCheckInTimes, listRecentVisits } from "../models/visitModel";
 import type {
   BookingStatusCounts,
   DashboardData,
@@ -34,11 +36,7 @@ async function visitsPerDay(days: number, label: Intl.DateTimeFormat): Promise<V
   const today = dateOnly(todayInMuseumTimezone());
   const start = addDays(today, -(days - 1));
 
-  const rows = await prisma.visit.groupBy({
-    by: ["visitDate"],
-    where: { visitDate: { gte: start, lte: today } },
-    _count: { _all: true },
-  });
+  const rows = await groupVisitsByDate(start, today);
   const countByDay = new Map(rows.map((row) => [toIsoDate(row.visitDate), row._count._all]));
 
   return Array.from({ length: days }, (_, index) => {
@@ -49,14 +47,11 @@ async function visitsPerDay(days: number, label: Intl.DateTimeFormat): Promise<V
 
 /** The hourly pattern (08.00 - 16.00) of the latest day that has check-ins, so the chart is never empty on a weekend. */
 async function visitsPerHourOfLatestDay(): Promise<VisitorTrendPoint[]> {
-  const latest = await prisma.visit.aggregate({ _max: { visitDate: true } });
+  const latest = await findLatestVisitDate();
   const counts = new Map<number, number>();
 
   if (latest._max.visitDate) {
-    const visits = await prisma.visit.findMany({
-      where: { visitDate: latest._max.visitDate },
-      select: { checkInTime: true },
-    });
+    const visits = await listCheckInTimes(latest._max.visitDate);
     for (const { checkInTime } of visits) {
       const hour = checkInTime.getUTCHours();
       counts.set(hour, (counts.get(hour) ?? 0) + 1);
@@ -82,20 +77,15 @@ export async function getVisitorTrend(range: DashboardRange): Promise<VisitorTre
 /** Bookings submitted inside the range, counted per status (a status without bookings is 0). */
 export async function getBookingStatusCounts(range: DashboardRange): Promise<BookingStatusCounts> {
   const since = new Date(Date.now() - RANGE_MS[range]);
-  const rows = await prisma.booking.groupBy({
-    by: ["status"],
-    where: { createdAt: { gte: since } },
-    _count: { _all: true },
-  });
+  const rows = await groupBookingsByStatusSince(since);
 
   const counts: BookingStatusCounts = { confirmed: 0, pending: 0, completed: 0, rejected: 0 };
   for (const row of rows) counts[row.status] = row._count._all;
   return counts;
 }
 
-type BookingRow = Prisma.BookingGetPayload<object>;
 
-function toPendingSummary(booking: BookingRow): PendingBookingSummary {
+function toPendingSummary(booking: BookingRecord): PendingBookingSummary {
   return {
     id: booking.id,
     institutionName: booking.institution,
@@ -112,13 +102,13 @@ export async function getDashboardData(): Promise<DashboardData> {
 
   const [todayVisitors, yesterdayVisitors, pendingBookings, totalAccounts, newAccounts, totalCollections, recentVisits] =
     await Promise.all([
-      prisma.visit.count({ where: { visitDate: today } }),
-      prisma.visit.count({ where: { visitDate: yesterday } }),
-      prisma.booking.findMany({ where: { status: "pending" }, orderBy: [{ visitDate: "asc" }, { createdAt: "asc" }] }),
-      prisma.visitorAccount.count(),
-      prisma.visitorAccount.count({ where: { registeredAt: { gte: thirtyDaysAgo } } }),
-      prisma.collection.count(),
-      prisma.visit.findMany({ where: { visitDate: today }, orderBy: [{ checkInTime: "desc" }, { id: "desc" }], take: 4 }),
+      countVisitsOn(today),
+      countVisitsOn(yesterday),
+      listPendingBookings(),
+      countVisitors(),
+      countVisitorsRegisteredSince(thirtyDaysAgo),
+      countCollections(),
+      listRecentVisits(today, 4),
     ]);
 
   const changePercent =

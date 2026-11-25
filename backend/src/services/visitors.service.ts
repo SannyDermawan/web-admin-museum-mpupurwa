@@ -1,13 +1,12 @@
 import type { Prisma } from "@prisma/client";
-import { prisma } from "../lib/prisma";
+import { listVisitsOn, type VisitRecord } from "../models/visitModel";
 import type { EducationLevel, TodayVisitorsData, Visitor } from "../types";
 import { dateOnly, todayInMuseumTimezone, toHourMinute } from "./dates";
 
 const EDUCATION_LEVELS: EducationLevel[] = ["Mahasiswa", "Pelajar", "Umum"];
 
-type VisitRow = Prisma.VisitGetPayload<object>;
 
-export function toVisitor(visit: VisitRow): Visitor {
+export function toVisitor(visit: VisitRecord): Visitor {
   return {
     id: visit.id,
     name: visit.visitorName,
@@ -32,10 +31,7 @@ export async function getTodayVisitors(query?: string): Promise<TodayVisitorsDat
       ]
     : [];
 
-  const visits = await prisma.visit.findMany({
-    where: { visitDate: dateOnly(today), ...(search.length > 0 ? { OR: search } : {}) },
-    orderBy: [{ checkInTime: "asc" }, { id: "asc" }],
-  });
+  const visits = await listVisitsOn(dateOnly(today), search);
 
   return { date: today, visitors: visits.map(toVisitor) };
 }

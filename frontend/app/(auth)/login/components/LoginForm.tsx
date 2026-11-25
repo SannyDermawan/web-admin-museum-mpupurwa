@@ -18,23 +18,26 @@ export function LoginForm() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  const [redirecting, setRedirecting] = useState(false);
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting, isSubmitSuccessful },
+    formState: { errors, isSubmitting },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "", remember: true },
   });
 
-  // Tombol tetap nonaktif setelah berhasil, selama halaman berpindah ke dashboard.
-  const busy = isSubmitting || isSubmitSuccessful;
+  // Tombol tetap nonaktif setelah berhasil, selama halaman berpindah ke dashboard. Sengaja BUKAN isSubmitSuccessful:
+  // error login ditangkap di onSubmit, jadi React Hook Form menganggapnya "berhasil" dan tombol akan mati terus.
+  const busy = isSubmitting || redirecting;
 
   async function onSubmit(values: LoginFormValues) {
     setServerError(null);
     try {
       const { data } = await apiPost<LoginData>("/api/auth/login", values);
+      setRedirecting(true);
       setAuthUser(data.user);
       router.replace("/dashboard");
     } catch (err) {

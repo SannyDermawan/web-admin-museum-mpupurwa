@@ -1,4 +1,4 @@
-import { prisma } from "../lib/prisma";
+import { listCollectionsForSimilarity } from "../models/collectionModel";
 
 export interface SimilarCollectionItem {
   id: number;
@@ -67,21 +67,11 @@ function computeSimilarityScore(
 
 /**
  * Mengembalikan hingga 4 koleksi lain yang paling mirip dengan `collectionId`.
- * Menggunakan satu kali query `findMany` agar tidak terjadi N+1 query.
+ * Menggunakan satu kali query agar tidak terjadi N+1 query.
  * Mengembalikan `null` bila `collectionId` tidak ditemukan di database.
  */
 export async function findSimilarCollections(collectionId: number, limit = 4): Promise<SimilarCollectionItem[] | null> {
-  const allRows = await prisma.collection.findMany({
-    select: {
-      id: true,
-      name: true,
-      era: true,
-      material: true,
-      meaning: true,
-      photoUrl: true,
-    },
-    orderBy: { id: "asc" },
-  });
+  const allRows = await listCollectionsForSimilarity();
 
   const target = allRows.find((row) => row.id === collectionId);
   if (!target) return null;

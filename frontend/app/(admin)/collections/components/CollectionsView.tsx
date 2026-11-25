@@ -139,7 +139,7 @@ export function CollectionsView() {
   return (
     <div className="flex min-h-screen bg-[#F7F5F0] text-[#241A0F] font-sans">
       <div className="flex-1 min-w-0 flex flex-col">
-        <div className="p-7 px-8 pb-12 flex-1">
+        <div className="flex-1 pb-12 sm:p-7 sm:px-8 sm:pb-12">
           {errorMessage && (
             <div
               role="alert"
