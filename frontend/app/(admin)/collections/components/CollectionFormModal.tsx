@@ -74,8 +74,19 @@ export default function CollectionFormModal({ isOpen, onClose, onSave, initialDa
 
   if (!isOpen) return null;
 
+  const isDrivePdf = Boolean(
+    initialData?.pdfUrl &&
+      /^https:\/\/(drive|docs)\.google\.com\//i.test(initialData.pdfUrl),
+  );
+
   const fotoName = foto?.name ?? (initialData?.fotoUrl ? "Foto sudah tersimpan." : "Belum ada foto. Format JPG atau PNG.");
-  const pdfName = pdfDoc?.name ?? (initialData?.pdfUrl ? "Dokumen sudah tersimpan." : "Belum ada dokumen.");
+  const pdfName =
+    pdfDoc?.name ??
+    (initialData?.pdfUrl
+      ? isDrivePdf
+        ? "Dokumen Google Drive sudah terhubung (unggah PDF baru jika ingin mengganti)."
+        : "Dokumen sudah tersimpan."
+      : "Belum ada dokumen.");
 
   const handleFileChange = (field: "foto" | "pdfDoc") => (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
